@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhotoU — Your Result</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--pink:#f43f8a;--purple:#8b2fc9;--lav:#c084fc;--dark:#0d0020;}
+body{min-height:100vh;overflow:hidden;background:var(--dark);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;}
+.bg-mesh{position:fixed;inset:0;background:radial-gradient(ellipse 60% 70% at 10% 50%,#2a0550 0%,transparent 60%),radial-gradient(ellipse 50% 60% at 90% 20%,#1a003a 0%,transparent 60%),#0d0020;z-index:0;}
+
+.topbar{position:relative;z-index:10;display:flex;align-items:center;gap:12px;padding:11px 22px;background:rgba(13,0,32,0.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
+.logo{font-family:'Pacifico',cursive;font-size:22px;background:linear-gradient(135deg,#e879f9,#f43f8a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.page-title{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,0.4);text-transform:uppercase;}
+.back-btn{margin-left:auto;padding:6px 16px;border-radius:20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.65);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;text-decoration:none;transition:all 0.2s;}
+.back-btn:hover{background:rgba(255,255,255,0.12);color:white;}
+
+.main{display:flex;flex:1;overflow:hidden;position:relative;z-index:1;}
+
+.panel-left{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;position:relative;}
+.congrats-text{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:4px;color:rgba(255,255,255,0.45);text-transform:uppercase;}
+
+.result-board{
+  background:white;border-radius:20px;padding:16px 16px 34px;
+  box-shadow:0 32px 100px rgba(0,0,0,0.7),0 0 0 1px rgba(255,255,255,0.05);
+  position:relative;
+  animation:stripIn 0.7s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes stripIn{from{opacity:0;transform:translateY(30px) scale(0.95);}to{opacity:1;transform:none;}}
+.result-board::before{content:'';position:absolute;top:-22px;left:50%;transform:translateX(-50%);width:46px;height:32px;background:#2a2a2a;border-radius:4px 4px 0 0;box-shadow:0 -4px 10px rgba(0,0,0,0.4);}
+.result-board::after{content:'';position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:24px;height:16px;background:#444;border-radius:3px;}
+
+/* Preview image — tampilkan dengan lebar tetap, height auto */
+#resultImg{width:260px;height:auto;border-radius:10px;display:block;}
+
+/* HD badge */
+.hd-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 12px;border-radius:20px;
+  background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.25);
+  color:#4ade80;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1.5px;
+}
+
+.panel-right{width:290px;flex-shrink:0;display:flex;flex-direction:column;background:rgba(255,255,255,0.03);backdrop-filter:blur(12px);border-left:1px solid rgba(255,255,255,0.07);padding:22px;gap:14px;overflow-y:auto;}
+.panel-right h2{font-size:10px;font-family:'Space Mono',monospace;letter-spacing:2px;color:rgba(255,255,255,0.5);text-transform:uppercase;}
+
+.action-card{background:rgba(255,255,255,0.04);border-radius:16px;padding:16px;border:1px solid rgba(255,255,255,0.07);display:flex;flex-direction:column;gap:8px;}
+.action-card .card-title{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.4);text-transform:uppercase;}
+.action-card .card-desc{font-size:11px;color:rgba(255,255,255,0.55);line-height:1.5;}
+
+.ac-btn{display:flex;align-items:center;gap:10px;width:100%;padding:13px 16px;border:none;border-radius:13px;cursor:pointer;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;transition:all 0.2s;text-align:left;}
+.ac-btn .icon{font-size:20px;flex-shrink:0;}
+.ac-btn.primary{background:linear-gradient(135deg,var(--purple),var(--pink));color:white;box-shadow:0 6px 20px rgba(139,47,201,0.4);}
+.ac-btn.primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(244,63,138,0.5);}
+.ac-btn.secondary{background:rgba(196,132,252,0.12);color:var(--lav);border:1px solid rgba(196,132,252,0.25);}
+.ac-btn.secondary:hover{background:rgba(196,132,252,0.2);}
+.ac-btn.ghost{background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.1);}
+.ac-btn.ghost:hover{background:rgba(255,255,255,0.1);}
+.ac-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none!important;}
+
+.divider{height:1px;background:rgba(255,255,255,0.07);margin:2px 0;}
+
+.start-over-btn{display:block;width:100%;padding:12px;background:transparent;border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.45);border-radius:13px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;text-align:center;transition:all 0.2s;text-decoration:none;}
+.start-over-btn:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.75);}
+
+.progress-wrap{display:flex;flex-direction:column;gap:4px;}
+.progress-label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;color:rgba(255,255,255,0.35);}
+.progress-bar-bg{height:4px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--purple),var(--pink));border-radius:3px;width:0;transition:width 0.4s ease;}
+
+/* Info resolusi */
+.res-info{font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:1px;text-align:center;}
+
+/* Confetti */
+.confetti-piece{position:fixed;top:-10px;width:10px;height:10px;animation:confettiFall linear forwards;border-radius:2px;pointer-events:none;z-index:999;}
+@keyframes confettiFall{to{transform:translateY(110vh) rotate(720deg);opacity:0;}}
+</style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+<div class="topbar">
+  <span class="logo">PhotoU</span>
+  <span class="page-title">Your Photo Strip</span>
+  <a href="sticker.html" class="back-btn">← Back</a>
+</div>
+<div class="main">
+  <div class="panel-left">
+    <p class="congrats-text">✨ Looking gorgeous! ✨</p>
+    <div class="result-board">
+      <!-- img preview — ditampilkan 260px lebar, tapi src adalah HD full-res -->
+      <img id="resultImg" src="" alt="Your photo strip">
+    </div>
+    <div class="res-info" id="resInfo"></div>
+  </div>
+
+  <div class="panel-right">
+    <h2>Save & Share</h2>
+
+    <div class="action-card">
+      <p class="card-title">📸 Download PNG</p>
+      <p class="card-desc">Save foto strip kamu dalam resolusi HD penuh.</p>
+      <div class="hd-badge" id="hdBadge" style="display:none;">📐 HD QUALITY</div>
+      <button class="ac-btn primary" onclick="savePhoto()">
+        <span class="icon">💾</span> SAVE HD PHOTO
+      </button>
+    </div>
+
+    <div class="action-card">
+      <p class="card-title">📦 Soft File (ZIP)</p>
+      <p class="card-desc">Download ZIP berisi foto strip + semua foto asli.</p>
+      <div class="progress-wrap" id="zipProgress" style="display:none;">
+        <span class="progress-label" id="zipLabel">Preparing...</span>
+        <div class="progress-bar-bg"><div class="progress-bar" id="zipBar"></div></div>
+      </div>
+      <button class="ac-btn secondary" id="zipBtn" onclick="downloadZip()">
+        <span class="icon">🗜️</span> DOWNLOAD ZIP
+      </button>
+    </div>
+
+    <div class="action-card">
+      <p class="card-title">📤 Share</p>
+      <p class="card-desc">Share strip kamu langsung ke teman.</p>
+      <button class="ac-btn ghost" onclick="sharePhoto()">
+        <span class="icon">🔗</span> SHARE
+      </button>
+    </div>
+
+    <div class="divider"></div>
+
+    <button class="ac-btn ghost" onclick="window.location.href='sticker.html'">
+      <span class="icon">🎨</span> EDIT STICKERS
+    </button>
+    <a class="start-over-btn" href="frames.html">← START OVER</a>
+  </div>
+</div>
+
+<script src="db.js"></script>
+<script>
+DB.logVisitor('result');
+
+const imgEl      = document.getElementById('resultImg');
+const resInfo    = document.getElementById('resInfo');
+const hdBadge    = document.getElementById('hdBadge');
+const finalStrip = localStorage.getItem('finalStrip');
+
+// ══════════════════════════════════════════════════════════════
+// LOAD RESULT IMAGE
+// finalStrip sudah HD (di-export dari sticker.html pakai HD_SCALE)
+// ══════════════════════════════════════════════════════════════
+if (finalStrip) {
+  imgEl.src = finalStrip;
+  imgEl.onload = () => {
+    // Tampilkan info resolusi aktual
+    const w = imgEl.naturalWidth, h = imgEl.naturalHeight;
+    resInfo.textContent = `${w} × ${h} px`;
+    if (w >= 500) hdBadge.style.display = 'inline-flex';
+  };
+} else {
+  // Fallback: strip belum ada di localStorage (user langsung buka result.html)
+  // Redirect ke sticker dulu
+  resInfo.textContent = 'No strip found — redirecting...';
+  setTimeout(() => window.location.href = 'sticker.html', 1500);
+}
+
+// ══════════════════════════════════════════════════════════════
+// SAVE PHOTO — download langsung dari src (sudah HD)
+// ══════════════════════════════════════════════════════════════
+function savePhoto() {
+  if (!imgEl.src || imgEl.src === window.location.href) return;
+  const a = document.createElement('a');
+  a.href     = imgEl.src;
+  a.download = `PhotoU-strip-${Date.now()}.png`;
+  a.click();
+}
+
+// ══════════════════════════════════════════════════════════════
+// DOWNLOAD ZIP
+// ══════════════════════════════════════════════════════════════
+async function downloadZip() {
+  const btn      = document.getElementById('zipBtn');
+  const progress = document.getElementById('zipProgress');
+  const label    = document.getElementById('zipLabel');
+  const bar      = document.getElementById('zipBar');
+
+  btn.disabled = true;
+  progress.style.display = 'flex';
+
+  try {
+    const zip    = new JSZip();
+    const folder = zip.folder('PhotoU');
+
+    label.textContent = 'Adding strip...'; bar.style.width = '15%';
+
+    // Strip HD
+    const stripData = (imgEl.src || '').split(',')[1];
+    if (stripData) folder.file('photo-strip-HD.png', stripData, { base64: true });
+
+    // Foto asli (disimpan saat booth)
+    // Cek berapa slots yang dipakai
+    const frameData = JSON.parse(localStorage.getItem('selectedFrame') || '{}');
+    const slots     = Math.max(1, Math.min(4, parseInt(frameData.slots) || 3));
+
+    for (let i = 0; i < slots; i++) {
+      const src = localStorage.getItem(`photo${i}`);
+      if (src) {
+        const data = src.split(',')[1];
+        folder.file(`photo-original-${i+1}.png`, data, { base64: true });
+      }
+      bar.style.width = `${15 + (i+1) * Math.floor(65/slots)}%`;
+      label.textContent = `Adding photo ${i+1}/${slots}...`;
+      await new Promise(r => setTimeout(r, 80));
+    }
+
+    // README
+    folder.file('README.txt', [
+      'PhotoU — Your Photo Booth Session',
+      '===================================',
+      '',
+      'Files in this ZIP:',
+      '  photo-strip-HD.png    — Strip lengkap resolusi HD (sticker + frame)',
+      ...Array.from({length: slots}, (_,i) => `  photo-original-${i+1}.png — Foto asli ${i+1}`),
+      '',
+      'Dibuat dengan PhotoU Photo Booth',
+      `Tanggal: ${new Date().toLocaleString('id-ID')}`,
+    ].join('\n'));
+
+    label.textContent = 'Compressing...'; bar.style.width = '85%';
+    await new Promise(r => setTimeout(r, 80));
+
+    const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+    bar.style.width = '100%'; label.textContent = 'Done! ✓';
+
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href = url; a.download = `PhotoU-${Date.now()}.zip`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+
+    setTimeout(() => {
+      progress.style.display = 'none';
+      btn.disabled = false;
+      bar.style.width = '0';
+    }, 1800);
+
+  } catch (e) {
+    console.error(e);
+    label.textContent = 'Error: ' + e.message;
+    btn.disabled = false;
+  }
+}
+
+// ══════════════════════════════════════════════════════════════
+// SHARE
+// ══════════════════════════════════════════════════════════════
+async function sharePhoto() {
+  if (navigator.share && navigator.canShare) {
+    try {
+      const res  = await fetch(imgEl.src);
+      const blob = await res.blob();
+      const file = new File([blob], 'PhotoU-strip.png', { type: 'image/png' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ title: 'My PhotoU Strip!', files: [file] });
+        return;
+      }
+    } catch(e) { /* fallback ke save */ }
+  }
+  savePhoto(); // fallback
+}
+
+// ══════════════════════════════════════════════════════════════
+// CONFETTI
+// ══════════════════════════════════════════════════════════════
+function spawnConfetti() {
+  const colors = ['#8b2fc9','#f43f8a','#c084fc','#ffd6e6','#fbbf24','#4ade80'];
+  for (let i = 0; i < 55; i++) {
+    const el = document.createElement('div'); el.className = 'confetti-piece';
+    el.style.left             = Math.random() * 100 + 'vw';
+    el.style.background       = colors[Math.floor(Math.random() * colors.length)];
+    el.style.width            = (5 + Math.random() * 9) + 'px';
+    el.style.height           = (5 + Math.random() * 9) + 'px';
+    el.style.borderRadius     = Math.random() > 0.5 ? '50%' : '3px';
+    el.style.animationDuration= (1.8 + Math.random() * 2) + 's';
+    el.style.animationDelay   = (Math.random() * 1.2) + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 5000);
+  }
+}
+setTimeout(spawnConfetti, 400);
+</script>
+<script src="mascot.js" data-scene="result"></script>
+</body>
+</html>

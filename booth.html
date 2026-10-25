@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhotoU — Take Photo</title>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--pink:#f43f8a;--purple:#8b2fc9;--lav:#c084fc;--dark:#0d0020;}
+body{height:100vh;overflow:hidden;background:var(--dark);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;}
+.bg-mesh{position:fixed;inset:0;background:radial-gradient(ellipse 60% 70% at 10% 50%,#2a0550 0%,transparent 60%),radial-gradient(ellipse 50% 60% at 90% 20%,#1a003a 0%,transparent 60%),#0d0020;z-index:0;}
+
+.topbar{position:relative;z-index:10;display:flex;align-items:center;gap:12px;padding:11px 22px;background:rgba(13,0,32,0.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.07);flex-shrink:0;}
+.logo{font-family:'Pacifico',cursive;font-size:22px;background:linear-gradient(135deg,#e879f9,#f43f8a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.page-title{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,0.4);text-transform:uppercase;}
+.back-btn{margin-left:auto;padding:6px 16px;border-radius:20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.65);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;text-decoration:none;transition:all 0.2s;}
+.back-btn:hover{background:rgba(255,255,255,0.12);color:white;}
+
+.main{display:flex;flex:1;overflow:hidden;position:relative;z-index:1;}
+
+/* Camera panel */
+.panel-left{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;position:relative;}
+
+.cam-outer{position:relative;width:430px;background:rgba(255,255,255,0.04);backdrop-filter:blur(8px);border-radius:18px;border:1px solid rgba(255,255,255,0.08);box-shadow:0 20px 60px rgba(0,0,0,0.5);overflow:hidden;}
+.cam-toolbar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:rgba(255,255,255,0.04);border-bottom:1px solid rgba(255,255,255,0.07);}
+.cam-dot{width:10px;height:10px;border-radius:50%;}
+.rec-dot{background:#f43f8a;animation:blink 1s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.2;}}
+.cam-pill{padding:4px 12px;border-radius:14px;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;border:1px solid rgba(255,255,255,0.12);background:transparent;color:rgba(255,255,255,0.55);cursor:pointer;transition:all 0.18s;}
+.cam-pill.active,.cam-pill:hover{background:linear-gradient(135deg,var(--purple),var(--pink));color:white;border-color:transparent;}
+.cam-pill.flash-on{background:linear-gradient(135deg,#f59e0b,#fbbf24);color:#000;border-color:transparent;}
+
+.video-box{position:relative;height:270px;overflow:hidden;background:#050010;}
+#video{width:100%;height:100%;object-fit:cover;display:block;}
+.vid-overlay{position:absolute;inset:0;pointer-events:none;}
+.vid-overlay::before,.vid-overlay::after{content:'';position:absolute;width:22px;height:22px;}
+.vid-overlay::before{top:10px;left:10px;border-top:2px solid var(--lav);border-left:2px solid var(--lav);}
+.vid-overlay::after{bottom:10px;right:10px;border-bottom:2px solid var(--lav);border-right:2px solid var(--lav);}
+#isoTag{position:absolute;bottom:9px;left:12px;color:rgba(255,255,255,0.5);font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;}
+#faceTag{position:absolute;bottom:9px;right:12px;color:rgba(255,255,255,0.5);font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;}
+#countdown{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:84px;font-family:'Space Mono',monospace;color:white;text-shadow:0 4px 30px rgba(0,0,0,0.8);opacity:0;pointer-events:none;transition:opacity 0.1s;background:rgba(0,0,0,0.4);}
+
+.cam-bottom{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,255,255,0.03);}
+.counter-badge{background:linear-gradient(135deg,var(--purple),var(--pink));color:white;border-radius:20px;padding:4px 14px;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;box-shadow:0 4px 12px rgba(139,47,201,0.35);}
+.counter-badge.done{background:linear-gradient(135deg,#16a34a,#22c55e);}
+
+/* Action row */
+.action-row{display:flex;align-items:center;gap:18px;}
+.snap-btn{width:74px;height:74px;border-radius:50%;border:3px solid var(--pink);background:rgba(255,255,255,0.05);cursor:pointer;transition:all 0.18s;box-shadow:0 6px 22px rgba(244,63,138,0.4);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;}
+.snap-ring{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--pink));transition:all 0.18s;box-shadow:0 4px 16px rgba(244,63,138,0.45);}
+.snap-btn:hover .snap-ring{transform:scale(0.92);}
+.snap-btn:active .snap-ring{transform:scale(0.84);}
+
+.side-btn{display:flex;flex-direction:column;align-items:center;gap:4px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:14px;padding:10px 16px;cursor:pointer;transition:all 0.18s;font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,0.5);letter-spacing:1px;}
+.side-btn:hover{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.9);}
+.side-btn .icon{font-size:20px;}
+.upload-btn{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:26px;padding:10px 20px;cursor:pointer;transition:all 0.18s;font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.55);letter-spacing:1px;}
+.upload-btn:hover{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.9);}
+#uploadInput{display:none;}
+
+/* Right strip panel */
+.panel-right{width:280px;flex-shrink:0;display:flex;flex-direction:column;background:rgba(255,255,255,0.03);backdrop-filter:blur(12px);border-left:1px solid rgba(255,255,255,0.07);padding:16px;gap:12px;overflow:hidden;}
+.strip-title{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,0.45);text-transform:uppercase;}
+.inventory-badge{display:flex;align-items:center;gap:7px;}
+.inv-dot{width:10px;height:10px;border-radius:50%;background:var(--lav);}
+.inv-label{font-family:'Space Mono',monospace;font-size:10px;color:rgba(255,255,255,0.4);letter-spacing:1px;}
+.inv-count{margin-left:auto;background:var(--purple);color:white;border-radius:10px;padding:2px 10px;font-family:'Space Mono',monospace;font-size:10px;box-shadow:0 3px 10px rgba(139,47,201,0.3);}
+
+.frame-strip-outer{flex:1;border-radius:16px;overflow:hidden;background:white;box-shadow:0 8px 30px rgba(0,0,0,0.4);display:flex;flex-direction:column;position:relative;}
+.strip-header-img{height:72px;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:13px;letter-spacing:3px;color:white;font-weight:700;}
+.strip-slots{flex:1;display:flex;flex-direction:column;gap:6px;padding:8px;background:#f8f2ff;}
+.slot-wrap{position:relative;flex:1;border-radius:9px;overflow:hidden;background:#ede4f7;min-height:0;}
+.slot-wrap img,.slot-wrap canvas{width:100%;height:100%;object-fit:cover;display:block;border-radius:9px;}
+.slot-wrap .empty-slot{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#c9a0e0;font-size:28px;}
+.slot-del-btn{position:absolute;top:5px;right:5px;background:rgba(244,63,138,0.85);color:white;border:none;border-radius:50%;width:24px;height:24px;font-size:12px;cursor:pointer;display:none;align-items:center;justify-content:center;transition:all 0.15s;box-shadow:0 2px 8px rgba(0,0,0,0.4);}
+.slot-wrap:hover .slot-del-btn{display:flex;}
+.strip-footer{height:44px;display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;}
+
+.finish-btn{display:block;width:100%;padding:14px;background:linear-gradient(135deg,var(--purple),var(--pink));color:white;border:none;border-radius:14px;font-family:'Space Mono',monospace;font-size:12px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;box-shadow:0 6px 20px rgba(139,47,201,0.4);}
+.finish-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 28px rgba(244,63,138,0.5);}
+.finish-btn:disabled{opacity:0.3;cursor:not-allowed;}
+
+#flashEl{position:fixed;inset:0;background:white;opacity:0;pointer-events:none;z-index:999;}
+.flash-anim{animation:flashKF 0.4s ease;}
+@keyframes flashKF{0%{opacity:0;}20%{opacity:1;}100%{opacity:0;}}
+</style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+<div id="flashEl"></div>
+<div class="topbar">
+  <span class="logo">PhotoU</span>
+  <span class="page-title">Take your photos</span>
+  <a href="frames.html" class="back-btn">← Back</a>
+</div>
+<div class="main">
+  <div class="panel-left">
+    <div class="cam-outer">
+      <div class="cam-toolbar">
+        <div class="cam-dot rec-dot"></div>
+        <button class="cam-pill active" id="mirrorBtn" onclick="toggleMirror()">⇄ MIRROR</button>
+        <button class="cam-pill" id="flipBtn" onclick="toggleFlip()">↕ FLIP</button>
+        <button class="cam-pill" id="flashBtn" onclick="toggleFlash()">⚡ FLASH</button>
+        <button class="cam-pill" id="timerBtn" onclick="cycleTimer()">⏱ TIMER: OFF</button>
+      </div>
+      <div class="video-box">
+        <video id="video" autoplay playsinline></video>
+        <div class="vid-overlay"></div>
+        <div id="isoTag">ISO 800</div>
+        <div id="faceTag">[ FACE ]</div>
+        <div id="countdown"></div>
+      </div>
+      <div class="cam-bottom">
+        <span class="counter-badge" id="counterBadge">1 / 3</span>
+        <span style="font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,0.4);letter-spacing:1px;">READY TO SHOOT</span>
+      </div>
+    </div>
+    <div class="action-row">
+      <label class="side-btn upload-btn" for="uploadInput">
+        <span class="icon">📁</span> UPLOAD
+      </label>
+      <input type="file" id="uploadInput" accept="image/*">
+      <button class="snap-btn" onclick="takePhoto()">
+        <div class="snap-ring"></div>
+      </button>
+      <button class="side-btn" id="nextFinishBtn" onclick="goNext()" disabled>
+        <span class="icon">→</span>
+        <span>NEXT</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="panel-right">
+    <div>
+      <p class="strip-title">Your Strip</p>
+      <div class="inventory-badge">
+        <div class="inv-dot"></div>
+        <span class="inv-label">INVENTORY</span>
+        <span class="inv-count" id="invCount">0/3</span>
+      </div>
+    </div>
+    <div class="frame-strip-outer">
+      <div class="strip-header-img" id="stripHeader" style="background:linear-gradient(135deg,#8b2fc9,#f43f8a);">PhotoU</div>
+      <div class="strip-slots" id="stripSlots">
+        <div class="slot-wrap" id="slot0"><div class="empty-slot">📷</div></div>
+        <div class="slot-wrap" id="slot1"><div class="empty-slot">📷</div></div>
+        <div class="slot-wrap" id="slot2"><div class="empty-slot">📷</div></div>
+      </div>
+      <div class="strip-footer" id="stripFooter" style="color:#8b2fc9;">PhotoU ✦</div>
+    </div>
+    <button class="finish-btn" id="finishBtn" disabled onclick="goNext()">FINISH →</button>
+  </div>
+</div>
+
+<script src="db.js"></script>
+<script>
+DB.logVisitor('booth');
+
+const video = document.getElementById('video');
+const slots = [null,null,null];
+let shotCount=0, mirrored=true, flipped=false, flashOn=false, timerSec=0;
+const TIMERS=[0,3,5,10]; let timerIdx=0;
+
+const frameData = JSON.parse(localStorage.getItem('selectedFrame')||'{}');
+if(frameData.bg){
+  document.getElementById('stripHeader').style.background=`linear-gradient(135deg,${frameData.border},${frameData.bg})`;
+  document.getElementById('stripFooter').style.color = frameData.text||'#8b2fc9';
+  document.querySelectorAll('.strip-slots').forEach(el=>el.style.background=(frameData.slot||'#f8f2ff')+'55');
+}
+
+// ── Camera setup ──────────────────────────────────────────────────────────
+let videoReady = false;
+video.addEventListener('canplay', () => { videoReady = true; });
+video.addEventListener('playing', () => { videoReady = true; });
+
+navigator.mediaDevices.getUserMedia({video:{facingMode:'user', width:{ideal:1280}, height:{ideal:720}}})
+  .then(stream => {
+    video.srcObject = stream;
+    video.play();
+  })
+  .catch(e => {
+    alert('Kamera tidak tersedia: ' + e.message + '\n\nCoba pakai tombol UPLOAD untuk upload foto.');
+  });
+
+function toggleMirror(){ mirrored=!mirrored; video.style.transform=buildTransform(); document.getElementById('mirrorBtn').classList.toggle('active',mirrored); }
+function toggleFlip(){ flipped=!flipped; video.style.transform=buildTransform(); document.getElementById('flipBtn').classList.toggle('active',flipped); }
+function buildTransform(){ let t=''; if(mirrored)t+='scaleX(-1) '; if(flipped)t+='scaleY(-1) '; return t||'none'; }
+function toggleFlash(){ flashOn=!flashOn; const btn=document.getElementById('flashBtn'); btn.classList.toggle('active',flashOn); btn.classList.toggle('flash-on',flashOn); btn.textContent=flashOn?'⚡ FLASH: ON':'⚡ FLASH'; }
+function cycleTimer(){ timerIdx=(timerIdx+1)%TIMERS.length; timerSec=TIMERS[timerIdx]; document.getElementById('timerBtn').textContent=timerSec===0?'⏱ TIMER: OFF':`⏱ ${timerSec}S`; }
+function doFlash(){ const fl=document.getElementById('flashEl'); fl.classList.remove('flash-anim'); void fl.offsetWidth; fl.classList.add('flash-anim'); }
+
+function captureNow(){
+  if(shotCount >= 3) return;
+
+  // ── FIX BUG 1: Pastikan video sudah benar-benar playing & punya dimensi ──
+  if(video.readyState < 2 || video.videoWidth === 0){
+    alert('Kamera belum siap, tunggu sebentar lalu coba lagi!');
+    return;
+  }
+
+  if(flashOn) doFlash();
+
+  // ── FIX BUG 2: Ukuran canvas sesuai rasio asli video ──
+  const W = 480, H = Math.round(W * (video.videoHeight / video.videoWidth)) || 360;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d');
+  ctx.save();
+  // Apply mirror/flip transform pada canvas (bukan hanya CSS)
+  if(mirrored && flipped){ ctx.translate(W, H); ctx.scale(-1,-1); }
+  else if(mirrored)       { ctx.translate(W, 0); ctx.scale(-1, 1); }
+  else if(flipped)        { ctx.translate(0, H); ctx.scale( 1,-1); }
+  ctx.drawImage(video, 0, 0, W, H);
+  ctx.restore();
+
+  slots[shotCount] = cv.toDataURL('image/jpeg', 0.92); // JPEG lebih ringan dari PNG
+  renderSlot(shotCount);
+  shotCount++;
+  updateUI();
+}
+
+function takePhoto(){
+  if(shotCount >= 3) return;
+  if(timerSec === 0){ captureNow(); return; }
+  let t = timerSec;
+  const cd = document.getElementById('countdown');
+  cd.style.opacity = 1;
+  cd.textContent = t;
+  const iv = setInterval(() => {
+    t--;
+    if(t <= 0){
+      clearInterval(iv);
+      cd.style.opacity = 0;
+      cd.textContent = '';
+      captureNow();
+    } else {
+      cd.textContent = t;
+    }
+  }, 1000);
+}
+
+function renderSlot(i){
+  const wrap = document.getElementById('slot' + i);
+  wrap.innerHTML = '';
+
+  // ── FIX BUG 3: Gunakan canvas untuk render foto di slot, bukan <img> ──
+  // (img tag kadang tidak load karena timing & CORS di file:// protocol)
+  const slotCanvas = document.createElement('canvas');
+  // Ukuran ditentukan setelah parent render — pakai onload img sebagai bridge
+  const tempImg = new Image();
+  tempImg.onload = () => {
+    slotCanvas.width  = tempImg.naturalWidth;
+    slotCanvas.height = tempImg.naturalHeight;
+    slotCanvas.getContext('2d').drawImage(tempImg, 0, 0);
+    slotCanvas.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;border-radius:9px;';
+  };
+  tempImg.src = slots[i];
+
+  // Fallback: tetap tampilkan img juga supaya pasti muncul
+  const img = document.createElement('img');
+  img.src = slots[i];
+  img.style.cssText = 'width:100%;height:100%;object-fit:cover;display:block;border-radius:9px;position:absolute;inset:0;';
+  img.alt = 'Foto ' + (i+1);
+
+  const del = document.createElement('button');
+  del.className = 'slot-del-btn';
+  del.textContent = '✕';
+  del.onclick = () => deleteSlot(i);
+
+  wrap.style.position = 'relative'; // pastikan position untuk del button
+  wrap.appendChild(img);
+  wrap.appendChild(del);
+}
+
+function deleteSlot(i){
+  slots[i] = null;
+  // Geser foto yang tersisa ke depan
+  for(let j = i; j < 2; j++) slots[j] = slots[j+1];
+  slots[2] = null;
+  shotCount = slots.filter(Boolean).length;
+  // Re-render semua slot
+  for(let j = 0; j < 3; j++){
+    if(slots[j]) renderSlot(j);
+    else document.getElementById('slot'+j).innerHTML = '<div class="empty-slot">📷</div>';
+  }
+  updateUI();
+}
+
+function updateUI(){
+  const done=slots.filter(Boolean).length;
+  document.getElementById('invCount').textContent=`${done}/3`;
+  const badge=document.getElementById('counterBadge');
+  if(done>=3){badge.textContent='3/3 ✓';badge.classList.add('done');}
+  else{badge.textContent=`${done+1} / 3`;badge.classList.remove('done');}
+  document.getElementById('finishBtn').disabled=done<3;
+  document.getElementById('nextFinishBtn').disabled=done<3;
+}
+
+document.getElementById('uploadInput').addEventListener('change',function(){
+  if(!this.files[0]||shotCount>=3)return;
+  const reader=new FileReader();
+  reader.onload=e=>{slots[shotCount]=e.target.result;renderSlot(shotCount);shotCount++;updateUI();};
+  reader.readAsDataURL(this.files[0]); this.value='';
+});
+
+function goNext(){
+  if(slots.filter(Boolean).length<3)return;
+  localStorage.setItem('photo0',slots[0]);
+  localStorage.setItem('photo1',slots[1]);
+  localStorage.setItem('photo2',slots[2]);
+  window.location.href='sticker.html';
+}
+
+video.style.transform='scaleX(-1)';
+document.getElementById('mirrorBtn').classList.add('active');
+</script>
+<script src="mascot.js" data-scene="booth"></script>
+</body>
+</html>

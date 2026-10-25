@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhotoU — Choose Frame</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{--pink:#f43f8a;--purple:#8b2fc9;--lav:#c084fc;--dark:#0d0020;}
+body{height:100vh;overflow:hidden;background:var(--dark);font-family:'DM Sans',sans-serif;display:flex;flex-direction:column;}
+.bg-mesh{position:fixed;inset:0;background:radial-gradient(ellipse 60% 70% at 10% 50%,#2a0550 0%,transparent 60%),radial-gradient(ellipse 50% 60% at 90% 20%,#1a003a 0%,transparent 60%),#0d0020;z-index:0;}
+
+/* Topbar */
+.topbar{
+  position:relative;z-index:10;
+  display:flex;align-items:center;gap:14px;padding:12px 24px;
+  background:rgba(13,0,32,0.8);backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;
+}
+.logo{font-family:'Pacifico',cursive;font-size:22px;background:linear-gradient(135deg,#e879f9,#f43f8a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.page-title{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,0.4);text-transform:uppercase;}
+.back-btn{margin-left:auto;padding:7px 16px;border-radius:20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.7);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;text-decoration:none;transition:all 0.2s;}
+.back-btn:hover{background:rgba(255,255,255,0.12);color:white;}
+
+/* Main */
+.main{display:flex;flex:1;overflow:hidden;position:relative;z-index:1;}
+
+/* Left panel */
+.panel-left{width:310px;flex-shrink:0;display:flex;flex-direction:column;background:rgba(255,255,255,0.03);backdrop-filter:blur(12px);border-right:1px solid rgba(255,255,255,0.07);}
+.left-header{padding:14px 18px 12px;border-bottom:1px solid rgba(255,255,255,0.06);}
+.left-header h2{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.5);text-transform:uppercase;margin-bottom:10px;}
+.filter-row{display:flex;gap:7px;flex-wrap:wrap;}
+.ftab{padding:5px 13px;border-radius:18px;font-size:10px;font-family:'Space Mono',monospace;border:1px solid rgba(255,255,255,0.12);background:transparent;color:rgba(255,255,255,0.5);cursor:pointer;transition:all 0.18s;letter-spacing:1px;}
+.ftab.active,.ftab:hover{background:linear-gradient(135deg,var(--purple),var(--pink));color:white;border-color:transparent;box-shadow:0 4px 16px rgba(139,47,201,0.35);}
+
+.frame-grid{flex:1;overflow-y:auto;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:10px;align-content:start;}
+.frame-grid::-webkit-scrollbar{width:3px;}
+.frame-grid::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px;}
+
+.fcard{
+  border-radius:12px;overflow:hidden;cursor:pointer;
+  border:2px solid rgba(255,255,255,0.07);transition:all 0.22s;
+  background:rgba(255,255,255,0.05);box-shadow:0 4px 16px rgba(0,0,0,0.3);
+  position:relative;
+}
+.fcard:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(0,0,0,0.4);border-color:rgba(255,255,255,0.2);}
+.fcard.selected{border-color:var(--pink);box-shadow:0 0 0 3px rgba(244,63,138,0.25),0 12px 30px rgba(0,0,0,0.4);}
+.fcard canvas{width:100%;display:block;}
+.fcard .flabel{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top,rgba(0,0,0,0.75),transparent);color:white;font-size:9px;font-family:'Space Mono',monospace;padding:18px 8px 6px;letter-spacing:1px;}
+.fcard .fbadge{position:absolute;top:6px;right:6px;background:var(--pink);color:white;border-radius:50%;width:22px;height:22px;font-size:11px;display:none;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(244,63,138,0.5);}
+.fcard.selected .fbadge{display:flex;}
+.fcard .fhot{position:absolute;top:6px;left:6px;background:rgba(255,180,0,0.85);color:#333;border-radius:8px;padding:2px 6px;font-family:'Space Mono',monospace;font-size:8px;letter-spacing:1px;}
+
+.left-footer{padding:14px 18px;border-top:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);}
+.sel-info{font-size:11px;color:rgba(255,255,255,0.4);font-family:'Space Mono',monospace;margin-bottom:10px;letter-spacing:1px;}
+.sel-info span{color:var(--lav);font-weight:700;}
+.use-btn{
+  display:block;width:100%;padding:14px;
+  background:linear-gradient(135deg,var(--purple),var(--pink));
+  color:white;border:none;border-radius:13px;
+  font-family:'Space Mono',monospace;font-size:12px;
+  letter-spacing:2px;text-transform:uppercase;cursor:pointer;
+  transition:all 0.22s;box-shadow:0 6px 20px rgba(139,47,201,0.4);
+}
+.use-btn:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 12px 28px rgba(244,63,138,0.5);}
+.use-btn:disabled{opacity:0.3;cursor:not-allowed;}
+
+/* Right panel */
+.panel-right{flex:1;display:flex;align-items:center;justify-content:center;padding:28px;position:relative;overflow:hidden;}
+.preview-wrap{display:flex;flex-direction:column;align-items:center;gap:16px;z-index:2;}
+.preview-label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:3px;color:rgba(255,255,255,0.4);text-transform:uppercase;}
+.preview-board{
+  background:white;border-radius:18px;padding:14px 14px 30px;
+  box-shadow:0 24px 80px rgba(0,0,0,0.6),0 0 0 1px rgba(255,255,255,0.05);
+  position:relative;width:220px;transition:all 0.3s;
+}
+.preview-board::before{content:'';position:absolute;top:-18px;left:50%;transform:translateX(-50%);width:44px;height:28px;background:#3a3a3a;border-radius:4px 4px 0 0;}
+.preview-board::after{content:'';position:absolute;top:-11px;left:50%;transform:translateX(-50%);width:22px;height:14px;background:#555;border-radius:3px;}
+#previewCanvas{width:100%;border-radius:9px;display:none;}
+#previewName{text-align:center;font-family:'Space Mono',monospace;font-size:10px;color:#888;letter-spacing:2px;margin-top:6px;}
+.no-hint{color:#aaa;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;text-align:center;padding:60px 18px;line-height:1.9;}
+.no-hint .hi{font-size:36px;display:block;margin-bottom:12px;opacity:0.4;}
+
+/* BG glow effects */
+.panel-right::before{content:'';position:absolute;width:350px;height:350px;background:radial-gradient(circle,rgba(139,47,201,0.12) 0%,transparent 70%);top:5%;right:5%;border-radius:50%;pointer-events:none;}
+.panel-right::after{content:'';position:absolute;width:280px;height:280px;background:radial-gradient(circle,rgba(244,63,138,0.1) 0%,transparent 70%);bottom:5%;left:10%;border-radius:50%;pointer-events:none;}
+</style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+<div class="topbar">
+  <span class="logo">PhotoU</span>
+  <span class="page-title">Choose your frame</span>
+  <a href="index.html" class="back-btn">← Back</a>
+</div>
+<div class="main">
+  <div class="panel-left">
+    <div class="left-header">
+      <h2>Browse Frames</h2>
+      <div class="filter-row">
+        <button class="ftab active" data-cat="all">All</button>
+        <button class="ftab" data-cat="pastel">Pastel</button>
+        <button class="ftab" data-cat="minimal">Minimal</button>
+        <button class="ftab" data-cat="floral">Floral</button>
+      </div>
+    </div>
+    <div class="frame-grid" id="frameGrid"></div>
+    <div class="left-footer">
+      <p class="sel-info">Selected: <span id="selName">— none —</span></p>
+      <button class="use-btn" id="useBtn" disabled onclick="goToBooth()">USE THIS FRAME →</button>
+    </div>
+  </div>
+  <div class="panel-right">
+    <div class="preview-wrap">
+      <p class="preview-label">Frame Preview</p>
+      <div class="preview-board">
+        <div class="no-hint" id="noHint"><span class="hi">🖼️</span>Select a frame<br>to preview it here</div>
+        <canvas id="previewCanvas" width="192" height="288"></canvas>
+        <p id="previewName"></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="db.js"></script>
+<script>
+DB.logVisitor('frames');
+
+let selId = null;
+const FRAMES = DB.getFrames();
+const bestSellers = DB.getBestSellers(3).map(f => f.id);
+
+function drawFrame(canvas, f, n=3) {
+  const ctx=canvas.getContext('2d'), W=canvas.width, H=canvas.height;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle=f.bg; ctx.fillRect(0,0,W,H);
+  if(f.style==='floral'||f.style==='sakura'){
+    for(let i=0;i<8;i++){const a=(i/8)*Math.PI*2,cx=Math.cos(a)*W*0.44+W/2,cy=Math.sin(a)*H*0.47+H/2;ctx.beginPath();ctx.ellipse(cx,cy,7,13,a,0,Math.PI*2);ctx.fillStyle=f.slot+'99';ctx.fill();}
+  } else if(f.style==='dots'){
+    ctx.fillStyle=f.slot+'80';
+    for(let x=10;x<W;x+=16) for(let y=10;y<H;y+=16){ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fill();}
+  } else if(f.style==='leaves'){
+    ctx.fillStyle=f.slot+'99';
+    for(let i=0;i<10;i++){const lx=(i%5)*(W/4.5)+4,ly=Math.floor(i/5)*(H*0.55)+8;ctx.beginPath();ctx.ellipse(lx,ly,8,18,Math.PI/4,0,Math.PI*2);ctx.fill();}
+  }
+  ctx.strokeStyle=f.border; ctx.lineWidth=W*0.038; const bi=ctx.lineWidth/2;
+  ctx.strokeRect(bi,bi,W-bi*2,H-bi*2);
+  const sp=W*0.09, sh=(H*0.73-sp*(n+1))/n;
+  for(let i=0;i<n;i++){
+    const sy=H*0.09+sp+i*(sh+sp);
+    ctx.fillStyle=f.slot; ctx.beginPath();
+    if(ctx.roundRect)ctx.roundRect(sp,sy,W-sp*2,sh,5); else ctx.rect(sp,sy,W-sp*2,sh);
+    ctx.fill();
+    ctx.fillStyle=f.border+'99'; ctx.font=`${sh*0.38}px sans-serif`; ctx.textAlign='center';
+    ctx.fillText('📷',W/2,sy+sh*0.66);
+  }
+  ctx.fillStyle=f.slot+'cc'; ctx.fillRect(0,H*0.87,W,H*0.13);
+  ctx.fillStyle=f.text; ctx.font=`bold ${W*0.065}px 'Space Mono',monospace`; ctx.textAlign='center';
+  ctx.fillText(f.name.toUpperCase(),W/2,H*0.965);
+}
+
+function buildGrid(cat='all') {
+  const grid = document.getElementById('frameGrid'); grid.innerHTML = '';
+  const list = cat === 'all' ? FRAMES : FRAMES.filter(f => f.cat === cat);
+  list.forEach(f => {
+    const card = document.createElement('div');
+    card.className = 'fcard' + (f.id===selId?' selected':'');
+    card.dataset.id = f.id;
+    const cv = document.createElement('canvas'); cv.width=150; cv.height=220;
+    drawFrame(cv, f);
+    const lbl = document.createElement('div'); lbl.className='flabel'; lbl.textContent=f.name;
+    const bdg = document.createElement('div'); bdg.className='fbadge'; bdg.textContent='✓';
+    card.append(cv,lbl,bdg);
+    if(bestSellers.slice(0,1).includes(f.id)) {
+      const hot = document.createElement('div'); hot.className='fhot'; hot.textContent='🔥 HOT';
+      card.appendChild(hot);
+    }
+    card.addEventListener('click', () => selectFrame(f.id));
+    grid.appendChild(card);
+  });
+}
+
+function selectFrame(id) {
+  selId = id;
+  const f = FRAMES.find(x => x.id===id);
+  document.querySelectorAll('.fcard').forEach(c => c.classList.toggle('selected', c.dataset.id===id));
+  document.getElementById('selName').textContent = f.name;
+  document.getElementById('useBtn').disabled = false;
+  const cv = document.getElementById('previewCanvas');
+  cv.width=192; cv.height=288; drawFrame(cv,f,3); cv.style.display='block';
+  document.getElementById('noHint').style.display='none';
+  document.getElementById('previewName').textContent = f.name;
+  localStorage.setItem('selectedFrameId', id);
+  localStorage.setItem('selectedFrame', JSON.stringify(f));
+}
+
+function goToBooth() { if(selId) window.location.href='booth.html'; }
+
+document.querySelectorAll('.ftab').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.ftab').forEach(x => x.classList.remove('active'));
+  b.classList.add('active'); buildGrid(b.dataset.cat);
+}));
+
+buildGrid();
+const saved = localStorage.getItem('selectedFrameId');
+if (saved && FRAMES.find(f => f.id===saved)) selectFrame(saved);
+</script>
+<script src="mascot.js" data-scene="frames"></script>
+</body>
+</html>

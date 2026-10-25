@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhotoU — Photo Booth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --pink:#f43f8a;--purple:#8b2fc9;--lavender:#c084fc;
+  --soft:#fdf2ff;--cream:#fff8fd;--dark:#1a0a2e;
+}
+
+body{
+  min-height:100vh; background:var(--dark);
+  font-family:'DM Sans',sans-serif; overflow:hidden;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  position:relative;
+}
+
+/* ── Animated BG ── */
+.bg-mesh{
+  position:fixed; inset:0; z-index:0;
+  background:radial-gradient(ellipse 80% 60% at 20% 50%,#3b1060 0%,transparent 60%),
+             radial-gradient(ellipse 60% 80% at 80% 20%,#1a004d 0%,transparent 60%),
+             radial-gradient(ellipse 70% 50% at 60% 80%,#4d0a2a 0%,transparent 60%),
+             #0d0020;
+}
+.bg-orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:0.35;animation:orbFloat 8s ease-in-out infinite;}
+.orb1{width:500px;height:500px;background:var(--purple);top:-100px;left:-100px;animation-delay:0s;}
+.orb2{width:400px;height:400px;background:var(--pink);bottom:-80px;right:-80px;animation-delay:3s;}
+.orb3{width:300px;height:300px;background:#6600aa;top:40%;left:60%;animation-delay:5s;}
+@keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(30px,-30px) scale(1.08);}}
+
+/* Stars */
+.stars{position:fixed;inset:0;z-index:0;overflow:hidden;}
+.star{position:absolute;border-radius:50%;background:white;animation:twinkle linear infinite;}
+@keyframes twinkle{0%,100%{opacity:0.1;}50%{opacity:0.9;}}
+
+/* ── Sign In button (top-right) ── */
+.signin-corner{
+  position:fixed; top:20px; right:24px; z-index:100;
+}
+.signin-btn{
+  padding:9px 22px; border-radius:30px;
+  background:rgba(255,255,255,0.08); backdrop-filter:blur(12px);
+  border:1.5px solid rgba(255,255,255,0.2);
+  color:rgba(255,255,255,0.85); font-family:'Space Mono',monospace;
+  font-size:11px; letter-spacing:2px; cursor:pointer;
+  text-decoration:none; transition:all 0.25s;
+  display:flex; align-items:center; gap:7px;
+}
+.signin-btn:hover{
+  background:rgba(255,255,255,0.15);
+  border-color:rgba(255,255,255,0.4);
+  color:white;
+  transform:translateY(-2px);
+}
+.signin-btn .lock{font-size:13px;}
+
+/* ── Main Card ── */
+.card{
+  position:relative; z-index:10;
+  display:flex; flex-direction:column; align-items:center;
+  gap:28px; padding:56px 64px;
+  background:rgba(255,255,255,0.04); backdrop-filter:blur(24px);
+  border:1px solid rgba(255,255,255,0.1);
+  border-radius:32px;
+  box-shadow:0 40px 100px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.05) inset;
+  animation:cardIn 0.8s cubic-bezier(.22,1,.36,1) both;
+}
+@keyframes cardIn{from{opacity:0;transform:translateY(40px) scale(0.95);}to{opacity:1;transform:none;}}
+
+.logo-wrap{display:flex;flex-direction:column;align-items:center;gap:6px;}
+.logo-icon{
+  width:80px;height:80px;border-radius:24px;
+  background:linear-gradient(135deg,var(--purple),var(--pink));
+  display:flex;align-items:center;justify-content:center;
+  font-size:38px; box-shadow:0 16px 48px rgba(139,47,201,0.5);
+  animation:iconPulse 3s ease-in-out infinite;
+  margin-bottom:4px;
+}
+@keyframes iconPulse{0%,100%{box-shadow:0 16px 48px rgba(139,47,201,0.5);}50%{box-shadow:0 16px 64px rgba(244,63,138,0.6);}}
+.logo-text{font-family:'Pacifico',cursive;font-size:52px;
+  background:linear-gradient(135deg,#e879f9,#f43f8a,#c084fc);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text; filter:drop-shadow(0 0 30px rgba(228,121,249,0.4));
+}
+.logo-tagline{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:4px;color:rgba(255,255,255,0.45);text-transform:uppercase;}
+
+/* Visitor count pill */
+.visitor-pill{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 20px;border-radius:30px;
+  background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
+}
+.vis-dot{width:8px;height:8px;border-radius:50%;background:#4ade80;animation:blink 1.2s infinite;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0.3;}}
+.vis-text{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.6);}
+.vis-count{font-family:'Space Mono',monospace;font-size:11px;color:#4ade80;font-weight:700;}
+
+/* Start button */
+.start-btn{
+  display:block;padding:18px 70px;
+  background:linear-gradient(135deg,var(--purple),var(--pink));
+  color:white; border:none; border-radius:18px;
+  font-family:'Space Mono',monospace; font-size:15px; letter-spacing:3px;
+  text-transform:uppercase; text-decoration:none; cursor:pointer;
+  box-shadow:0 12px 40px rgba(139,47,201,0.5);
+  transition:all 0.25s; position:relative; overflow:hidden;
+}
+.start-btn::after{
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.15),transparent);
+  opacity:0; transition:opacity 0.2s;
+}
+.start-btn:hover{transform:translateY(-3px);box-shadow:0 20px 50px rgba(244,63,138,0.55);}
+.start-btn:hover::after{opacity:1;}
+.start-btn:active{transform:translateY(-1px);}
+
+/* Mini frames preview */
+.preview-row{display:flex;gap:10px;align-items:center;}
+.mini-frame{
+  width:42px;height:62px;border-radius:8px;
+  box-shadow:0 4px 16px rgba(0,0,0,0.4);
+  border:2px solid rgba(255,255,255,0.1);
+  overflow:hidden; flex-shrink:0;
+  transition:transform 0.2s;
+}
+.mini-frame:hover{transform:scale(1.08) rotate(-3deg);}
+.mini-frame canvas{width:100%;height:100%;}
+.preview-label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.35);text-align:center;}
+
+/* Steps */
+.steps{display:flex;gap:24px;}
+.step{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0.7;}
+.step-icon{
+  width:36px;height:36px;border-radius:12px;
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+.step-label{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:2px;color:rgba(255,255,255,0.5);}
+.step-sep{color:rgba(255,255,255,0.2);font-size:14px;margin-top:10px;}
+</style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+<div class="bg-orb orb1"></div>
+<div class="bg-orb orb2"></div>
+<div class="bg-orb orb3"></div>
+<div class="stars" id="stars"></div>
+
+<!-- Sign In button top-right (admin only) -->
+<div class="signin-corner">
+  <a href="admin-login.html" class="signin-btn" id="signinBtn">
+    <span class="lock">🔐</span> SIGN IN
+  </a>
+</div>
+
+<div class="card">
+  <div class="logo-wrap">
+    <div class="logo-icon">📸</div>
+    <div class="logo-text">PhotoU</div>
+    <div class="logo-tagline">Your Digital Photo Booth</div>
+  </div>
+
+  <div class="visitor-pill">
+    <div class="vis-dot"></div>
+    <span class="vis-text">TOTAL VISITORS</span>
+    <span class="vis-count" id="visCount">0</span>
+  </div>
+
+  <div class="preview-row" id="previewRow">
+    <span class="preview-label">FRAMES →</span>
+  </div>
+
+  <a href="frames.html" class="start-btn" id="startBtn">✦ START ✦</a>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-icon">🖼️</div>
+      <div class="step-label">FRAME</div>
+    </div>
+    <div class="step-sep">›</div>
+    <div class="step">
+      <div class="step-icon">📷</div>
+      <div class="step-label">SHOOT</div>
+    </div>
+    <div class="step-sep">›</div>
+    <div class="step">
+      <div class="step-icon">✨</div>
+      <div class="step-label">STICKER</div>
+    </div>
+    <div class="step-sep">›</div>
+    <div class="step">
+      <div class="step-icon">💾</div>
+      <div class="step-label">SAVE</div>
+    </div>
+  </div>
+</div>
+
+<script src="db.js"></script>
+<script>
+// Stars
+const stars = document.getElementById('stars');
+for (let i = 0; i < 80; i++) {
+  const s = document.createElement('div');
+  s.className = 'star';
+  const sz = Math.random() * 2.5 + 0.5;
+  s.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;animation-duration:${2+Math.random()*4}s;animation-delay:${Math.random()*4}s;`;
+  stars.appendChild(s);
+}
+
+// Log visitor
+DB.logVisitor('index');
+
+// Show visitor count
+const visitors = DB.getVisitors();
+document.getElementById('visCount').textContent = visitors.length;
+
+// Admin redirect if already logged in
+if (DB.isAdmin()) {
+  const btn = document.getElementById('signinBtn');
+  btn.href = 'admin.html';
+  btn.innerHTML = '<span>⚙️</span> ADMIN';
+}
+
+// Mini frame previews
+function drawMiniFrame(canvas, f) {
+  const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height;
+  ctx.fillStyle = f.bg; ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle = f.border; ctx.lineWidth = 3;
+  ctx.strokeRect(1.5,1.5,W-3,H-3);
+  const slotH = (H*0.7-12)/3, slotY0 = H*0.13+4;
+  for(let i=0;i<3;i++){
+    const sy = slotY0 + i*(slotH+4);
+    ctx.fillStyle = f.slot+'cc'; ctx.fillRect(3,sy,W-6,slotH);
+  }
+  ctx.fillStyle = f.slot+'88'; ctx.fillRect(0,H*0.87,W,H*0.13);
+}
+
+const row = document.getElementById('previewRow');
+const frames = DB.getFrames().slice(0, 5);
+frames.forEach(f => {
+  const wrap = document.createElement('div');
+  wrap.className = 'mini-frame';
+  const cv = document.createElement('canvas');
+  cv.width = 42; cv.height = 62;
+  drawMiniFrame(cv, f);
+  wrap.appendChild(cv);
+  row.appendChild(wrap);
+});
+</script>
+<script src="mascot.js" data-scene="index"></script>
+</body>
+</html>

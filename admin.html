@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PhotoU — Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=DM+Sans:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --pink:#f43f8a;--purple:#8b2fc9;--lav:#c084fc;--dark:#0d0020;
+  --card:rgba(255,255,255,0.05);--green:#4ade80;--amber:#f59e0b;
+}
+body{min-height:100vh;background:var(--dark);font-family:'DM Sans',sans-serif;color:white;}
+.bg-mesh{position:fixed;inset:0;background:
+  radial-gradient(ellipse 60% 40% at 20% 30%,#2a0a50 0%,transparent 60%),
+  radial-gradient(ellipse 50% 60% at 80% 70%,#1a0035 0%,transparent 60%),
+  #0d0020;z-index:0;}
+
+.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:16px;padding:14px 28px;background:rgba(13,0,32,0.85);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,0.08);}
+.topbar .logo{font-family:'Pacifico',cursive;font-size:22px;background:linear-gradient(135deg,#e879f9,#f43f8a);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.topbar .badge{padding:4px 12px;border-radius:20px;background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.3);color:#f87171;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;}
+.topbar .back-site{margin-left:auto;padding:8px 18px;border-radius:20px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.7);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;text-decoration:none;transition:all 0.2s;}
+.topbar .back-site:hover{background:rgba(255,255,255,0.12);color:white;}
+.logout-btn{padding:8px 18px;border-radius:20px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:#f87171;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;transition:all 0.2s;}
+.logout-btn:hover{background:rgba(248,113,113,0.2);}
+
+.page{position:relative;z-index:1;padding:28px;max-width:1400px;margin:0 auto;}
+.section-title{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:3px;color:rgba(255,255,255,0.45);text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.section-title::after{content:'';flex:1;height:1px;background:rgba(255,255,255,0.08);}
+
+.tab-nav{display:flex;gap:8px;margin-bottom:28px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:6px;}
+.tab-btn{flex:1;padding:10px 16px;border-radius:11px;border:none;background:transparent;color:rgba(255,255,255,0.45);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1.5px;cursor:pointer;transition:all 0.2s;text-transform:uppercase;}
+.tab-btn.active{background:linear-gradient(135deg,var(--purple),var(--pink));color:white;box-shadow:0 4px 20px rgba(244,63,138,0.35);}
+.tab-btn:hover:not(.active){background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.7);}
+.tab-section{display:none;}
+.tab-section.active{display:block;}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px;}
+.stat-card{padding:24px;border-radius:20px;background:var(--card);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;gap:8px;transition:all 0.2s;}
+.stat-card:hover{border-color:rgba(255,255,255,0.15);transform:translateY(-2px);}
+.stat-icon{font-size:28px;}
+.stat-value{font-family:'Space Mono',monospace;font-size:32px;font-weight:700;background:linear-gradient(135deg,var(--lav),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.stat-label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:2px;color:rgba(255,255,255,0.4);}
+
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:24px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+
+.panel{background:var(--card);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.08);border-radius:24px;overflow:hidden;}
+.panel-head{padding:18px 22px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;align-items:center;justify-content:space-between;}
+.panel-head h2{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;color:rgba(255,255,255,0.7);text-transform:uppercase;}
+.panel-body{padding:20px 22px;}
+
+.frame-list{display:flex;flex-direction:column;gap:8px;max-height:380px;overflow-y:auto;padding-right:4px;}
+.frame-list::-webkit-scrollbar{width:3px;}
+.frame-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px;}
+.frame-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);transition:all 0.18s;}
+.frame-row:hover{background:rgba(255,255,255,0.07);}
+.frame-thumb{border-radius:7px;overflow:hidden;flex-shrink:0;position:relative;}
+.frame-thumb-img{width:32px;height:48px;object-fit:cover;border-radius:7px;display:block;}
+.frame-info{flex:1;}
+.frame-name{font-family:'Space Mono',monospace;font-size:11px;color:rgba(255,255,255,0.85);margin-bottom:3px;}
+.frame-meta{font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,0.35);letter-spacing:1px;}
+.frame-type-badge{padding:2px 7px;border-radius:6px;font-family:'Space Mono',monospace;font-size:8px;letter-spacing:1px;}
+.badge-png{background:rgba(74,222,128,0.15);color:#4ade80;border:1px solid rgba(74,222,128,0.25);}
+.badge-gen{background:rgba(192,132,252,0.15);color:#c084fc;border:1px solid rgba(192,132,252,0.25);}
+.del-btn{width:28px;height:28px;border-radius:8px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.25);color:#f87171;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all 0.18s;flex-shrink:0;}
+.del-btn:hover{background:rgba(248,113,113,0.25);}
+
+.bs-list{display:flex;flex-direction:column;gap:10px;}
+.bs-item{display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.06);transition:all 0.18s;}
+.bs-item:hover{background:rgba(255,255,255,0.08);}
+.bs-rank{font-family:'Space Mono',monospace;font-size:16px;font-weight:700;color:rgba(255,255,255,0.2);width:30px;text-align:center;}
+.bs-rank.gold{color:#fbbf24;}
+.bs-rank.silver{color:#94a3b8;}
+.bs-rank.bronze{color:#c2784a;}
+.bs-canvas-wrap{border-radius:8px;overflow:hidden;flex-shrink:0;}
+.bs-info{flex:1;}
+.bs-name{font-family:'Space Mono',monospace;font-size:12px;color:white;margin-bottom:4px;}
+.bs-uses{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.4);}
+.bs-bar-wrap{height:4px;background:rgba(255,255,255,0.08);border-radius:3px;margin-top:6px;}
+.bs-bar{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--purple),var(--pink));}
+.bs-cat{padding:3px 10px;border-radius:10px;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;background:rgba(196,132,252,0.15);color:#c084fc;}
+
+.log-list{display:flex;flex-direction:column;gap:6px;max-height:320px;overflow-y:auto;padding-right:4px;}
+.log-list::-webkit-scrollbar{width:3px;}
+.log-list::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px;}
+.log-row{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);font-family:'Space Mono',monospace;}
+.log-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.log-page{font-size:10px;letter-spacing:1px;color:rgba(255,255,255,0.75);flex:1;}
+.log-time{font-size:9px;color:rgba(255,255,255,0.3);white-space:nowrap;}
+.page-dot-index{background:#4ade80;}
+.page-dot-frames{background:#60a5fa;}
+.page-dot-booth{background:#f59e0b;}
+.page-dot-sticker{background:#c084fc;}
+.page-dot-result{background:#f43f8a;}
+.clear-btn{padding:7px 16px;border-radius:10px;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.2);color:#f87171;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;transition:all 0.18s;}
+.clear-btn:hover{background:rgba(248,113,113,0.18);}
+
+.empty{padding:32px;text-align:center;font-family:'Space Mono',monospace;font-size:11px;color:rgba(255,255,255,0.25);letter-spacing:2px;}
+
+/* ═══ ADD FRAME TAB ═══ */
+.add-tabs{display:flex;gap:8px;margin-bottom:24px;}
+.add-tab-btn{padding:9px 20px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.5);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:1px;cursor:pointer;transition:all 0.2s;}
+.add-tab-btn.active{background:rgba(244,63,138,0.15);border-color:rgba(244,63,138,0.4);color:#f43f8a;}
+.add-tab-panel{display:none;}
+.add-tab-panel.active{display:block;}
+
+.upload-zone{border:2px dashed rgba(255,255,255,0.15);border-radius:20px;padding:48px 32px;text-align:center;cursor:pointer;transition:all 0.25s;position:relative;overflow:hidden;background:rgba(255,255,255,0.02);}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--pink);background:rgba(244,63,138,0.07);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;}
+.upload-zone .uz-icon{font-size:48px;margin-bottom:12px;display:block;}
+.upload-zone .uz-title{font-family:'Space Mono',monospace;font-size:13px;letter-spacing:2px;color:rgba(255,255,255,0.7);margin-bottom:6px;}
+.upload-zone .uz-sub{font-size:12px;color:rgba(255,255,255,0.35);}
+.upload-preview{display:none;margin-top:20px;align-items:center;gap:16px;padding:16px;background:rgba(255,255,255,0.04);border-radius:14px;border:1px solid rgba(255,255,255,0.08);}
+.upload-preview.show{display:flex;}
+.upload-preview img{width:60px;height:90px;object-fit:contain;border-radius:8px;background:rgba(255,255,255,0.05);}
+.upload-preview-info{flex:1;}
+.upload-preview-name{font-family:'Space Mono',monospace;font-size:11px;color:white;margin-bottom:4px;}
+.upload-preview-size{font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,0.35);}
+
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
+.form-group{display:flex;flex-direction:column;gap:7px;}
+.form-group label{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.45);text-transform:uppercase;}
+.form-group input[type=text],.form-group select{padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:white;font-family:'DM Sans',sans-serif;font-size:13px;transition:all 0.2s;outline:none;}
+.form-group input[type=text]:focus,.form-group select:focus{border-color:var(--lav);background:rgba(255,255,255,0.09);}
+.form-group select option{background:#1a0035;color:white;}
+.color-row{display:flex;gap:10px;margin-bottom:14px;}
+.color-group{display:flex;flex-direction:column;gap:6px;align-items:center;flex:1;}
+.color-group label{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:1.5px;color:rgba(255,255,255,0.4);text-transform:uppercase;text-align:center;}
+.color-group input[type=color]{width:100%;height:38px;border:1px solid rgba(255,255,255,0.12);border-radius:9px;background:none;cursor:pointer;padding:3px;}
+
+/* ── Frame size controls (NEW) ── */
+.size-preset-row{display:flex;gap:6px;margin-bottom:10px;}
+.size-preset{padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.55);font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;transition:all 0.2s;text-align:center;}
+.size-preset:hover{background:rgba(255,255,255,0.09);}
+.size-preset.active{background:rgba(244,63,138,0.18);border-color:var(--pink);color:var(--pink);}
+
+.frame-size-visual{display:flex;align-items:flex-end;gap:10px;margin-top:6px;}
+.size-bar-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;}
+.size-bar-label{font-family:'Space Mono',monospace;font-size:8px;color:rgba(255,255,255,0.35);letter-spacing:1px;}
+.size-bar{background:rgba(255,255,255,0.08);border-radius:4px;width:100%;position:relative;overflow:hidden;transition:height 0.3s cubic-bezier(.34,1.56,.64,1);}
+.size-bar-fill{position:absolute;bottom:0;left:0;right:0;border-radius:4px;background:linear-gradient(0deg,var(--purple),var(--pink));transition:height 0.3s;}
+.size-bar-val{font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,0.5);}
+
+/* Canvas */
+.creator-wrap{display:grid;grid-template-columns:260px 1fr;gap:20px;align-items:start;}
+.creator-canvas-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;}
+#creatorCanvas{border-radius:14px;border:1px solid rgba(255,255,255,0.1);background:#111;}
+.creator-controls{display:flex;flex-direction:column;gap:12px;}
+.ctrl-group{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:14px;}
+.ctrl-group-title{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.4);text-transform:uppercase;margin-bottom:10px;}
+
+.style-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.style-opt{padding:8px;border-radius:9px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.55);font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;text-align:center;transition:all 0.18s;}
+.style-opt:hover{background:rgba(255,255,255,0.08);}
+.style-opt.active{background:rgba(192,132,252,0.2);border-color:var(--lav);color:var(--lav);}
+
+.range-group{display:flex;flex-direction:column;gap:5px;}
+.range-group label{font-family:'Space Mono',monospace;font-size:8px;letter-spacing:1.5px;color:rgba(255,255,255,0.4);}
+.range-group input[type=range]{width:100%;accent-color:var(--pink);}
+
+.text-input-sm{padding:7px 11px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:white;font-family:'Space Mono',monospace;font-size:10px;width:100%;outline:none;}
+.text-input-sm:focus{border-color:var(--lav);}
+
+.sticker-row{display:flex;gap:6px;flex-wrap:wrap;}
+.sticker-opt{padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);cursor:pointer;font-size:16px;transition:all 0.18s;}
+.sticker-opt:hover,.sticker-opt.active{background:rgba(244,63,138,0.15);border-color:rgba(244,63,138,0.4);}
+
+.btn-primary{width:100%;padding:13px;border-radius:13px;border:none;background:linear-gradient(135deg,var(--purple),var(--pink));color:white;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;transition:all 0.2s;margin-top:4px;}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(244,63,138,0.4);}
+.btn-primary:active{transform:translateY(0);}
+.btn-secondary{width:100%;padding:11px;border-radius:13px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.75);font-family:'Space Mono',monospace;font-size:11px;letter-spacing:2px;cursor:pointer;transition:all 0.2s;}
+.btn-secondary:hover{background:rgba(255,255,255,0.1);}
+
+/* Info box */
+.info-box{display:flex;gap:8px;align-items:flex-start;padding:10px 14px;border-radius:10px;background:rgba(96,165,250,0.08);border:1px solid rgba(96,165,250,0.2);margin-bottom:14px;}
+.info-box span{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;color:rgba(96,165,250,0.9);line-height:1.6;}
+
+.toast{position:fixed;bottom:28px;right:28px;z-index:9999;padding:14px 22px;border-radius:14px;background:rgba(13,0,32,0.95);backdrop-filter:blur(20px);border:1px solid rgba(74,222,128,0.3);font-family:'Space Mono',monospace;font-size:11px;letter-spacing:1px;color:#4ade80;box-shadow:0 8px 32px rgba(0,0,0,0.5);transform:translateY(80px);opacity:0;transition:all 0.35s cubic-bezier(.34,1.56,.64,1);pointer-events:none;}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast.err{border-color:rgba(248,113,113,0.4);color:#f87171;}
+</style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+
+<div class="topbar">
+  <span class="logo">PhotoU</span>
+  <span class="badge">⚙️ ADMIN PANEL</span>
+  <a href="index.html" class="back-site">← View Site</a>
+  <button class="logout-btn" onclick="doLogout()">🔓 LOGOUT</button>
+</div>
+
+<div class="page">
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('overview')">📊 Overview</button>
+    <button class="tab-btn" onclick="switchTab('frames')">🗂️ Frames</button>
+    <button class="tab-btn" onclick="switchTab('add')">➕ Add Frame</button>
+    <button class="tab-btn" onclick="switchTab('logs')">👣 Logs</button>
+  </div>
+
+  <!-- ═══ OVERVIEW ═══ -->
+  <div class="tab-section active" id="tab-overview">
+    <div class="section-title">Overview</div>
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-icon">👥</div><div class="stat-value" id="statVisitors">0</div><div class="stat-label">TOTAL VISITORS</div></div>
+      <div class="stat-card"><div class="stat-icon">🖼️</div><div class="stat-value" id="statFrames">0</div><div class="stat-label">ACTIVE FRAMES</div></div>
+      <div class="stat-card"><div class="stat-icon">📸</div><div class="stat-value" id="statStrips">0</div><div class="stat-label">STRIPS MADE</div></div>
+      <div class="stat-card"><div class="stat-icon">🔥</div><div class="stat-value" id="statBest">—</div><div class="stat-label">TOP FRAME</div></div>
+    </div>
+    <div class="section-title">Best Sellers</div>
+    <div class="panel"><div class="panel-body"><div class="bs-list" id="bsList"></div></div></div>
+  </div>
+
+  <!-- ═══ FRAMES ═══ -->
+  <div class="tab-section" id="tab-frames">
+    <div class="section-title">Frame Manager</div>
+    <div class="panel">
+      <div class="panel-head">
+        <h2>🗂️ All Frames (<span id="frameCount">0</span>)</h2>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="frameSearch" placeholder="Search frames…" oninput="renderFrameManager(DB.getFrames())"
+            style="padding:6px 14px;border-radius:9px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:white;font-family:'Space Mono',monospace;font-size:10px;outline:none;width:180px;">
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="frame-list" id="frameList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ ADD FRAME ═══ -->
+  <div class="tab-section" id="tab-add">
+    <div class="section-title">Add New Frame</div>
+    <div class="add-tabs">
+      <button class="add-tab-btn active" onclick="switchAddTab('upload')">📤 Upload PNG</button>
+      <button class="add-tab-btn" onclick="switchAddTab('creator')">🎨 Frame Creator</button>
+    </div>
+
+    <!-- UPLOAD PNG -->
+    <div class="add-tab-panel active" id="addtab-upload">
+      <div class="grid-2">
+        <div>
+          <div class="upload-zone" id="uploadZone" ondragover="e_dragOver(event)" ondragleave="e_dragLeave(event)" ondrop="e_drop(event)">
+            <input type="file" id="pngFileInput" accept="image/png,image/jpeg,image/webp" onchange="handleFileSelect(event)">
+            <span class="uz-icon">🖼️</span>
+            <div class="uz-title">DROP PNG HERE</div>
+            <div class="uz-sub">or click to browse · PNG / JPEG / WEBP</div>
+          </div>
+          <div class="upload-preview" id="uploadPreview">
+            <img id="uploadPreviewImg" src="" alt="">
+            <div class="upload-preview-info">
+              <div class="upload-preview-name" id="uploadPreviewName"></div>
+              <div class="upload-preview-size" id="uploadPreviewSize"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Frame Name</label>
+              <input type="text" id="upName" placeholder="e.g. Cherry Blossom">
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <select id="upCat">
+                <option value="pastel">Pastel</option>
+                <option value="minimal">Minimal</option>
+                <option value="floral">Floral</option>
+                <option value="vintage">Vintage</option>
+                <option value="dark">Dark</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Photo Slot Count</label>
+              <select id="upSlots" onchange="updateUploadSlotPreview()">
+                <option value="1">1 foto</option>
+                <option value="2">2 foto</option>
+                <option value="3" selected>3 foto</option>
+                <option value="4">4 foto</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Frame Ratio</label>
+              <select id="upRatio" onchange="updateUploadSlotPreview()">
+                <option value="standard">Standard (3:4)</option>
+                <option value="wide">Wide (4:3)</option>
+                <option value="square">Square (1:1)</option>
+                <option value="tall">Tall (2:3)</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Slot height per slot (NEW) -->
+          <div class="form-group">
+            <label>Slot Height (% of frame height)</label>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <input type="range" id="upSlotH" min="15" max="40" value="25"
+                style="flex:1;accent-color:var(--pink);"
+                oninput="document.getElementById('upSlotHVal').textContent=this.value+'%';updateUploadSlotPreview()">
+              <span id="upSlotHVal" style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(255,255,255,0.6);width:36px;">25%</span>
+            </div>
+          </div>
+
+          <!-- Slot gap -->
+          <div class="form-group">
+            <label>Gap Between Slots</label>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <input type="range" id="upSlotGap" min="2" max="20" value="8"
+                style="flex:1;accent-color:var(--lav);"
+                oninput="document.getElementById('upSlotGapVal').textContent=this.value+'px';updateUploadSlotPreview()">
+              <span id="upSlotGapVal" style="font-family:'Space Mono',monospace;font-size:11px;color:rgba(255,255,255,0.6);width:36px;">8px</span>
+            </div>
+          </div>
+
+          <!-- Default photo fit -->
+          <div class="form-group">
+            <label>Default Photo Fit</label>
+            <select id="upPhotoFit">
+              <option value="cover">Cover (fill slot, crop excess)</option>
+              <option value="contain">Contain (fit entire photo)</option>
+            </select>
+          </div>
+
+          <!-- Slot layout visual preview -->
+          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px;">
+            <p style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.35);margin-bottom:10px;">SLOT LAYOUT PREVIEW</p>
+            <div id="uploadSlotVisual" style="display:flex;gap:6px;align-items:stretch;"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Label / Watermark Text</label>
+            <input type="text" id="upLabel" placeholder="PhotoU" value="PhotoU">
+          </div>
+          <button class="btn-primary" onclick="saveUploadedFrame()">💾 SAVE FRAME</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FRAME CREATOR -->
+    <div class="add-tab-panel" id="addtab-creator">
+      <div class="creator-wrap">
+
+        <!-- Preview Canvas -->
+        <div class="creator-canvas-wrap">
+          <canvas id="creatorCanvas" width="220" height="340"></canvas>
+          <div style="font-family:'Space Mono',monospace;font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:1.5px;text-align:center;">PREVIEW · ACTUAL HD 2x</div>
+          <input type="text" id="cName" class="text-input-sm" placeholder="Frame name…" style="width:220px;" value="My Custom Frame">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;width:220px;">
+            <div class="form-group">
+              <label style="font-size:8px;">Category</label>
+              <select id="cCat" style="padding:7px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:white;font-family:'Space Mono',monospace;font-size:9px;outline:none;">
+                <option value="pastel">Pastel</option>
+                <option value="minimal">Minimal</option>
+                <option value="floral">Floral</option>
+                <option value="vintage">Vintage</option>
+                <option value="dark">Dark</option>
+                <option value="custom">Custom</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label style="font-size:8px;">Slots (foto)</label>
+              <select id="cSlots" onchange="updateCreatorCanvas()" style="padding:7px;border-radius:8px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);color:white;font-family:'Space Mono',monospace;font-size:9px;outline:none;">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-primary" style="width:220px;" onclick="saveCreatedFrame()">💾 SAVE FRAME</button>
+          <button class="btn-secondary" style="width:220px;margin-top:4px;" onclick="exportCreatorPreview()">⬇️ EXPORT PNG</button>
+        </div>
+
+        <!-- Controls -->
+        <div class="creator-controls">
+
+          <!-- Colors -->
+          <div class="ctrl-group">
+            <div class="ctrl-group-title">🎨 Colors</div>
+            <div class="color-row">
+              <div class="color-group"><label>BG</label><input type="color" id="cBg" value="#fce4f3" oninput="updateCreatorCanvas()"></div>
+              <div class="color-group"><label>Border</label><input type="color" id="cBorder" value="#e8a0d8" oninput="updateCreatorCanvas()"></div>
+              <div class="color-group"><label>Slot</label><input type="color" id="cSlot" value="#f7c6e8" oninput="updateCreatorCanvas()"></div>
+              <div class="color-group"><label>Text</label><input type="color" id="cText" value="#c06898" oninput="updateCreatorCanvas()"></div>
+            </div>
+          </div>
+
+          <!-- Pattern -->
+          <div class="ctrl-group">
+            <div class="ctrl-group-title">✨ Pattern</div>
+            <div class="style-grid">
+              <div class="style-opt active" data-style="minimal" onclick="selectStyle(this)">MINIMAL</div>
+              <div class="style-opt" data-style="dots" onclick="selectStyle(this)">DOTS</div>
+              <div class="style-opt" data-style="grid" onclick="selectStyle(this)">GRID</div>
+              <div class="style-opt" data-style="floral" onclick="selectStyle(this)">FLORAL</div>
+              <div class="style-opt" data-style="sakura" onclick="selectStyle(this)">SAKURA</div>
+              <div class="style-opt" data-style="leaves" onclick="selectStyle(this)">LEAVES</div>
+              <div class="style-opt" data-style="stars" onclick="selectStyle(this)">STARS</div>
+              <div class="style-opt" data-style="hearts" onclick="selectStyle(this)">HEARTS</div>
+              <div class="style-opt" data-style="zigzag" onclick="selectStyle(this)">ZIGZAG</div>
+            </div>
+          </div>
+
+          <!-- Border -->
+          <div class="ctrl-group">
+            <div class="ctrl-group-title">📐 Border & Frame</div>
+            <div class="range-group">
+              <label>BORDER WIDTH <span id="cBorderWVal">6</span>%</label>
+              <input type="range" id="cBorderW" min="2" max="15" value="6" oninput="document.getElementById('cBorderWVal').textContent=this.value;updateCreatorCanvas()">
+            </div>
+            <div class="range-group" style="margin-top:8px;">
+              <label>CORNER RADIUS <span id="cRadiusVal">8</span></label>
+              <input type="range" id="cRadius" min="0" max="30" value="8" oninput="document.getElementById('cRadiusVal').textContent=this.value;updateCreatorCanvas()">
+            </div>
+          </div>
+
+          <!-- ── SLOT SIZE (NEW) ── -->
+          <div class="ctrl-group">
+            <div class="ctrl-group-title">📏 Slot Size</div>
+
+            <!-- Aspect ratio preset -->
+            <p style="font-family:'Space Mono',monospace;font-size:8px;color:rgba(255,255,255,0.3);letter-spacing:1px;margin-bottom:6px;">FRAME RATIO PRESET</p>
+            <div class="size-preset-row">
+              <div class="size-preset active" data-ratio="portrait" onclick="selectRatioPreset(this,'portrait')">3:4<br><span style="font-size:7px;opacity:0.6;">PORTRAIT</span></div>
+              <div class="size-preset" data-ratio="square" onclick="selectRatioPreset(this,'square')">1:1<br><span style="font-size:7px;opacity:0.6;">SQUARE</span></div>
+              <div class="size-preset" data-ratio="wide" onclick="selectRatioPreset(this,'wide')">4:3<br><span style="font-size:7px;opacity:0.6;">WIDE</span></div>
+              <div class="size-preset" data-ratio="tall" onclick="selectRatioPreset(this,'tall')">2:3<br><span style="font-size:7px;opacity:0.6;">TALL</span></div>
+            </div>
+
+            <div style="margin-top:10px;">
+              <div class="range-group">
+                <label>SLOT HEIGHT <span id="cSlotHVal">25</span>% of frame</label>
+                <input type="range" id="cSlotH" min="15" max="40" value="25" oninput="document.getElementById('cSlotHVal').textContent=this.value;updateCreatorCanvas()">
+              </div>
+              <div class="range-group" style="margin-top:8px;">
+                <label>SLOT GAP <span id="cSlotGapVal">8</span>px</label>
+                <input type="range" id="cSlotGap" min="2" max="24" value="8" oninput="document.getElementById('cSlotGapVal').textContent=this.value;updateCreatorCanvas()">
+              </div>
+              <div class="range-group" style="margin-top:8px;">
+                <label>SIDE PADDING <span id="cPadVal">16</span>px</label>
+                <input type="range" id="cPad" min="4" max="40" value="16" oninput="document.getElementById('cPadVal').textContent=this.value;updateCreatorCanvas()">
+              </div>
+            </div>
+
+            <!-- Visual bar chart of slots -->
+            <div style="margin-top:10px;">
+              <p style="font-family:'Space Mono',monospace;font-size:8px;color:rgba(255,255,255,0.3);letter-spacing:1px;margin-bottom:6px;">SLOT PROPORTION PREVIEW</p>
+              <div class="frame-size-visual" id="slotSizeVisual"></div>
+            </div>
+          </div>
+
+          <!-- Text / Label -->
+          <div class="ctrl-group">
+            <div class="ctrl-group-title">🏷️ Label</div>
+            <input type="text" id="cLabel" class="text-input-sm" placeholder="PhotoU" value="PhotoU" oninput="updateCreatorCanvas()">
+            <div class="range-group" style="margin-top:8px;">
+              <label>FONT SIZE <span id="cFontVal">7</span>%</label>
+              <input type="range" id="cFont" min="4" max="14" value="7" oninput="document.getElementById('cFontVal').textContent=this.value;updateCreatorCanvas()">
+            </div>
+          </div>
+
+          <!-- Stickers -->
+          <div class="ctrl-group">
+            <div class="ctrl-group-title">🌸 Decorations</div>
+            <div class="sticker-row" id="stickerRow">
+              <div class="sticker-opt" data-s="🌸" onclick="toggleSticker(this)">🌸</div>
+              <div class="sticker-opt" data-s="⭐" onclick="toggleSticker(this)">⭐</div>
+              <div class="sticker-opt" data-s="🦋" onclick="toggleSticker(this)">🦋</div>
+              <div class="sticker-opt" data-s="🌈" onclick="toggleSticker(this)">🌈</div>
+              <div class="sticker-opt" data-s="💫" onclick="toggleSticker(this)">💫</div>
+              <div class="sticker-opt" data-s="🎀" onclick="toggleSticker(this)">🎀</div>
+              <div class="sticker-opt" data-s="🌻" onclick="toggleSticker(this)">🌻</div>
+              <div class="sticker-opt" data-s="✨" onclick="toggleSticker(this)">✨</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ LOGS ═══ -->
+  <div class="tab-section" id="tab-logs">
+    <div class="section-title">Visitor Logs</div>
+    <div class="panel">
+      <div class="panel-head">
+        <h2>👣 Activity Log</h2>
+        <button class="clear-btn" onclick="clearLogs()">CLEAR ALL</button>
+      </div>
+      <div class="panel-body">
+        <div class="log-list" id="logList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="db.js"></script>
+<script>
+if (!DB.isAdmin()) window.location.href = 'admin-login.html';
+function doLogout() { DB.logout(); window.location.href = 'index.html'; }
+
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    const tabs = ['overview','frames','add','logs'];
+    b.classList.toggle('active', tabs[i] === name);
+  });
+  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  if(name==='overview') refresh();
+  if(name==='frames') renderFrameManager(DB.getFrames());
+  if(name==='logs') renderLogs(DB.getVisitors());
+  if(name==='add') { setTimeout(() => { updateCreatorCanvas(); updateUploadSlotPreview(); }, 100); }
+}
+
+function switchAddTab(name) {
+  document.querySelectorAll('.add-tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['upload','creator'][i] === name);
+  });
+  document.querySelectorAll('.add-tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('addtab-'+name).classList.add('active');
+  if(name==='creator') updateCreatorCanvas();
+  if(name==='upload') updateUploadSlotPreview();
+}
+
+function showToast(msg, err=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (err?' err':'');
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ══════════════════════════════════════════
+// RATIO PRESETS
+// ══════════════════════════════════════════
+const RATIO_PRESETS = {
+  portrait: { w: 220, h: 340 },
+  square:   { w: 280, h: 280 },
+  wide:     { w: 340, h: 220 },
+  tall:     { w: 200, h: 360 },
+};
+let currentRatio = 'portrait';
+
+function selectRatioPreset(el, ratio) {
+  document.querySelectorAll('.size-preset').forEach(e => e.classList.remove('active'));
+  el.classList.add('active');
+  currentRatio = ratio;
+  const pr = RATIO_PRESETS[ratio];
+  const canvas = document.getElementById('creatorCanvas');
+  canvas.width  = pr.w;
+  canvas.height = pr.h;
+  updateCreatorCanvas();
+}
+
+// ══════════════════════════════════════════
+// UPLOAD SLOT VISUAL PREVIEW
+// ══════════════════════════════════════════
+function updateUploadSlotPreview() {
+  const slots   = parseInt(document.getElementById('upSlots').value) || 3;
+  const slotHPct= parseInt(document.getElementById('upSlotH').value) || 25;
+  const gap     = parseInt(document.getElementById('upSlotGap').value) || 8;
+  const visual  = document.getElementById('uploadSlotVisual');
+  visual.innerHTML = '';
+
+  const maxBarH = 80;
+  const barH = Math.round((slotHPct / 40) * maxBarH);
+
+  for (let i = 0; i < slots; i++) {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = `flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;`;
+    const bar = document.createElement('div');
+    bar.style.cssText = `width:100%;height:${barH}px;background:linear-gradient(135deg,rgba(139,47,201,0.4),rgba(244,63,138,0.4));border-radius:5px;border:1px solid rgba(255,255,255,0.12);transition:height 0.3s;`;
+    const label = document.createElement('div');
+    label.style.cssText = `font-family:'Space Mono',monospace;font-size:8px;color:rgba(255,255,255,0.35);letter-spacing:1px;`;
+    label.textContent = `#${i+1}`;
+    wrap.appendChild(bar);
+    wrap.appendChild(label);
+    visual.appendChild(wrap);
+    if (i < slots - 1) {
+      const sep = document.createElement('div');
+      sep.style.cssText = `width:${gap}px;flex-shrink:0;`;
+      visual.appendChild(sep);
+    }
+  }
+}
+
+// ══════════════════════════════════════════
+// DRAW FRAME
+// ══════════════════════════════════════════
+function drawFrame(canvas, f, slots) {
+  slots = slots || f.slots || 3;
+  const ctx = canvas.getContext('2d'), W = canvas.width, H = canvas.height;
+  ctx.clearRect(0,0,W,H);
+
+  // Get size params
+  const slotHPct = f.slotH || 25;
+  const slotGap  = f.slotGap !== undefined ? f.slotGap : 8;
+  const padPx    = f.pad !== undefined ? f.pad : 16;
+
+  // Header / footer (fixed proportion)
+  const headerH = H * 0.14;
+  const footerH = H * 0.09;
+  const availH  = H - headerH - footerH;
+  const slotH   = Math.max(20, (slotHPct / 100) * H);
+  const totalSlotsH = slotH * slots + slotGap * (slots - 1);
+  // Center vertically in available space
+  const topPad  = headerH + (availH - totalSlotsH) / 2;
+  const sp      = padPx;
+  const sw      = W - sp * 2;
+
+  // BG
+  ctx.fillStyle = f.bg || '#fff';
+  ctx.fillRect(0,0,W,H);
+  drawPattern(ctx, W, H, f.style || 'minimal', f.slot || '#eee', f);
+
+  // Border
+  const bw = (f.borderW || 6) / 100 * W;
+  ctx.strokeStyle = f.border || '#ccc';
+  ctx.lineWidth = bw;
+  const br = f.radius || 8;
+  ctx.beginPath();
+  if(ctx.roundRect) ctx.roundRect(bw/2, bw/2, W-bw, H-bw, br);
+  else ctx.rect(bw/2, bw/2, W-bw, H-bw);
+  ctx.stroke();
+
+  // Header bar
+  ctx.fillStyle = f.border || '#ccc';
+  ctx.fillRect(0, 0, W, headerH);
+  ctx.fillStyle = 'white';
+  const fsize = (f.fontSize || 7) / 100 * W * 1.5;
+  ctx.font = `bold ${fsize}px 'Pacifico', cursive`;
+  ctx.textAlign = 'center';
+  ctx.fillText(f.label || 'PhotoU', W/2, headerH * 0.65);
+
+  // Photo slots
+  for(let i=0;i<slots;i++){
+    const sy = topPad + i*(slotH+slotGap);
+    ctx.fillStyle = f.slot || '#eee';
+    ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(sp, sy, sw, slotH, br*0.4);
+    else ctx.rect(sp, sy, sw, slotH);
+    ctx.fill();
+
+    // Slot number
+    ctx.fillStyle = (f.text || '#666') + '88';
+    ctx.font = `bold ${slotH * 0.25}px 'Space Mono', monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText(`${i+1}`, W/2, sy + slotH/2 + slotH*0.08);
+  }
+
+  // Footer bar
+  ctx.fillStyle = (f.slot||'#eee') + 'cc';
+  ctx.fillRect(0, H-footerH, W, footerH);
+  const fsizeLabel = (f.fontSize || 7) / 100 * W;
+  ctx.fillStyle = f.text || '#666';
+  ctx.font = `bold ${fsizeLabel}px 'Space Mono', monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText(f.label || 'PhotoU', W/2, H - footerH * 0.3);
+
+  // Stickers
+  if(f.stickers && f.stickers.length) {
+    const stickerFontSize = W * 0.12;
+    ctx.font = `${stickerFontSize}px serif`;
+    ctx.textAlign = 'center';
+    const positions = [{x:0.12,y:0.06},{x:0.88,y:0.06},{x:0.12,y:0.96},{x:0.88,y:0.96}];
+    f.stickers.slice(0,4).forEach((s,i) => {
+      const p = positions[i % positions.length];
+      ctx.fillText(s, W*p.x, H*p.y);
+    });
+  }
+
+  // Slot size indicator (small overlay)
+  ctx.fillStyle = 'rgba(244,63,138,0.08)';
+  ctx.font = `${W*0.035}px 'Space Mono', monospace`;
+  ctx.fillStyle = 'rgba(255,255,255,0.2)';
+  ctx.textAlign = 'right';
+  ctx.fillText(`${Math.round(slotH)}×${Math.round(sw)}`, W - sp - 2, topPad - 3);
+}
+
+function drawPattern(ctx, W, H, style, color, f) {
+  if(style==='dots') {
+    ctx.fillStyle = color + '70';
+    for(let x=12;x<W;x+=18) for(let y=12;y<H;y+=18){ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();}
+  } else if(style==='grid') {
+    ctx.strokeStyle = color + '50'; ctx.lineWidth=1;
+    for(let x=0;x<W;x+=18){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(let y=0;y<H;y+=18){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  } else if(style==='floral'||style==='sakura') {
+    for(let i=0;i<10;i++){const a=(i/10)*Math.PI*2,cx=Math.cos(a)*W*0.42+W/2,cy=Math.sin(a)*H*0.45+H/2;ctx.beginPath();ctx.ellipse(cx,cy,W*0.07,W*0.13,a,0,Math.PI*2);ctx.fillStyle=color+'88';ctx.fill();}
+  } else if(style==='leaves') {
+    ctx.fillStyle=color+'88';
+    for(let i=0;i<12;i++){const lx=(i%4)*(W/3.5)+6,ly=Math.floor(i/4)*(H*0.38)+8;ctx.beginPath();ctx.ellipse(lx,ly,9,20,Math.PI/4,0,Math.PI*2);ctx.fill();}
+  } else if(style==='stars') {
+    ctx.fillStyle=color+'80';
+    for(let i=0;i<15;i++){const sx=((i*137.5)%100)/100*W,sy=((i*97.3)%100)/100*H;ctx.font=`${W*0.08}px serif`;ctx.fillText('★',sx,sy);}
+  } else if(style==='hearts') {
+    ctx.fillStyle=color+'80';
+    for(let i=0;i<10;i++){const hx=(i%5)*(W/4)+4,hy=Math.floor(i/5)*(H*0.55)+10;ctx.font=`${W*0.09}px serif`;ctx.textAlign='left';ctx.fillText('♥',hx,hy);}
+  } else if(style==='zigzag') {
+    ctx.strokeStyle=color+'70'; ctx.lineWidth=2;
+    for(let y=0;y<H;y+=16){
+      ctx.beginPath();
+      for(let x=0;x<W;x+=12){ctx.lineTo(x,y+(x%24<12?0:8));}
+      ctx.stroke();
+    }
+  }
+}
+
+// Slot size visual (creator)
+function updateSlotSizeVisual() {
+  const slots   = parseInt(document.getElementById('cSlots').value) || 3;
+  const slotHPct= parseInt(document.getElementById('cSlotH').value) || 25;
+  const visual  = document.getElementById('slotSizeVisual');
+  if (!visual) return;
+  visual.innerHTML = '';
+  const maxH = 50;
+  const barH = Math.round((slotHPct / 40) * maxH);
+  for (let i = 0; i < slots; i++) {
+    const wrap = document.createElement('div');
+    wrap.className = 'size-bar-wrap';
+    wrap.style.maxWidth = '50px';
+    const bar = document.createElement('div');
+    bar.className = 'size-bar'; bar.style.height = maxH + 'px';
+    const fill = document.createElement('div');
+    fill.className = 'size-bar-fill'; fill.style.height = barH + 'px';
+    bar.appendChild(fill);
+    const val = document.createElement('div');
+    val.className = 'size-bar-val'; val.textContent = slotHPct + '%';
+    const lbl = document.createElement('div');
+    lbl.className = 'size-bar-label'; lbl.textContent = `#${i+1}`;
+    wrap.appendChild(bar); wrap.appendChild(val); wrap.appendChild(lbl);
+    visual.appendChild(wrap);
+  }
+}
+
+// ══════════════════════════════════════════
+// UPLOAD PNG
+// ══════════════════════════════════════════
+let uploadedFileDataURL = null;
+
+function e_dragOver(e) { e.preventDefault(); document.getElementById('uploadZone').classList.add('drag-over'); }
+function e_dragLeave(e) { document.getElementById('uploadZone').classList.remove('drag-over'); }
+function e_drop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if(file) processUploadFile(file);
+}
+function handleFileSelect(e) { const file = e.target.files[0]; if(file) processUploadFile(file); }
+
+function processUploadFile(file) {
+  if(!file.type.startsWith('image/')) { showToast('⚠️ Only image files!', true); return; }
+  if(file.size > 5*1024*1024) { showToast('⚠️ Max file size 5MB!', true); return; }
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    uploadedFileDataURL = e.target.result;
+    document.getElementById('uploadPreviewImg').src = uploadedFileDataURL;
+    document.getElementById('uploadPreviewName').textContent = file.name;
+    document.getElementById('uploadPreviewSize').textContent = (file.size/1024).toFixed(1) + ' KB';
+    document.getElementById('uploadPreview').classList.add('show');
+    const nameInput = document.getElementById('upName');
+    if(!nameInput.value) nameInput.value = file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g,' ').replace(/\b\w/g,c=>c.toUpperCase());
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveUploadedFrame() {
+  if(!uploadedFileDataURL) { showToast('⚠️ Please select a file first!', true); return; }
+  const name     = document.getElementById('upName').value.trim() || 'Custom Frame';
+  const cat      = document.getElementById('upCat').value;
+  const slots    = parseInt(document.getElementById('upSlots').value);
+  const label    = document.getElementById('upLabel').value.trim() || 'PhotoU';
+  const slotH    = parseInt(document.getElementById('upSlotH').value) || 25;
+  const slotGap  = parseInt(document.getElementById('upSlotGap').value) || 8;
+  const photoFit = document.getElementById('upPhotoFit').value;
+  const ratio    = document.getElementById('upRatio').value;
+
+  DB.addFrame({
+    name, cat, slots, label,
+    type: 'png',
+    imageUrl: uploadedFileDataURL,
+    slotH, slotGap, photoFit, ratio,
+    bg:'#ffffff', border:'#cccccc', slot:'#eeeeee', text:'#666666', style:'minimal',
+  });
+  showToast('✅ Frame "' + name + '" saved!');
+  uploadedFileDataURL = null;
+  document.getElementById('uploadPreview').classList.remove('show');
+  document.getElementById('pngFileInput').value = '';
+  document.getElementById('upName').value = '';
+  renderFrameManager(DB.getFrames());
+}
+
+// ══════════════════════════════════════════
+// FRAME CREATOR
+// ══════════════════════════════════════════
+function getCreatorState() {
+  return {
+    bg:     document.getElementById('cBg').value,
+    border: document.getElementById('cBorder').value,
+    slot:   document.getElementById('cSlot').value,
+    text:   document.getElementById('cText').value,
+    style:  document.querySelector('.style-opt.active')?.dataset.style || 'minimal',
+    borderW:  parseInt(document.getElementById('cBorderW').value),
+    radius:   parseInt(document.getElementById('cRadius').value),
+    fontSize: parseInt(document.getElementById('cFont').value),
+    label:    document.getElementById('cLabel').value || 'PhotoU',
+    stickers: [...document.querySelectorAll('.sticker-opt.active')].map(el=>el.dataset.s),
+    slots:    parseInt(document.getElementById('cSlots').value),
+    slotH:    parseInt(document.getElementById('cSlotH').value),
+    slotGap:  parseInt(document.getElementById('cSlotGap').value),
+    pad:      parseInt(document.getElementById('cPad').value),
+    ratio:    currentRatio,
+  };
+}
+
+function updateCreatorCanvas() {
+  const canvas = document.getElementById('creatorCanvas');
+  const state = getCreatorState();
+  drawFrame(canvas, state, state.slots);
+  updateSlotSizeVisual();
+}
+
+function selectStyle(el) {
+  document.querySelectorAll('.style-opt').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  updateCreatorCanvas();
+}
+
+function toggleSticker(el) {
+  el.classList.toggle('active');
+  updateCreatorCanvas();
+}
+
+function saveCreatedFrame() {
+  const state = getCreatorState();
+  const name = document.getElementById('cName').value.trim() || 'My Frame';
+  const cat  = document.getElementById('cCat').value;
+  const offCanvas = document.createElement('canvas');
+  const pr = RATIO_PRESETS[currentRatio];
+  offCanvas.width = pr.w * 2; offCanvas.height = pr.h * 2;
+  drawFrame(offCanvas, state, state.slots);
+  const imageUrl = offCanvas.toDataURL('image/png');
+  DB.addFrame({ ...state, name, cat, type:'generated', imageUrl });
+  showToast('✅ Frame "' + name + '" saved!');
+  renderFrameManager(DB.getFrames());
+}
+
+function exportCreatorPreview() {
+  const state = getCreatorState();
+  const name = document.getElementById('cName').value.trim() || 'frame';
+  const pr = RATIO_PRESETS[currentRatio];
+  const off = document.createElement('canvas');
+  off.width = pr.w * 4; off.height = pr.h * 4;
+  drawFrame(off, state, state.slots);
+  const a = document.createElement('a');
+  a.href = off.toDataURL('image/png');
+  a.download = name.replace(/\s+/g,'-').toLowerCase() + '-frame.png';
+  a.click();
+  showToast('⬇️ PNG exported!');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => { updateCreatorCanvas(); updateUploadSlotPreview(); }, 100);
+});
+
+// ══════════════════════════════════════════
+// OVERVIEW
+// ══════════════════════════════════════════
+function refresh() {
+  const visitors = DB.getVisitors(), frames = DB.getFrames(), strips = DB.getStrips();
+  const best = DB.getBestSellers(1)[0];
+  document.getElementById('statVisitors').textContent = visitors.length;
+  document.getElementById('statFrames').textContent   = frames.length;
+  document.getElementById('statStrips').textContent   = strips.length;
+  document.getElementById('statBest').textContent     = best ? best.name.split(' ')[0] : '—';
+  renderBestSellers(frames);
+}
+
+function renderBestSellers(frames) {
+  const sorted = [...frames].sort((a,b)=>(b.uses||0)-(a.uses||0));
+  const maxUses = sorted[0]?.uses || 1;
+  const list = document.getElementById('bsList'); list.innerHTML = '';
+  if(!sorted.length){list.innerHTML='<div class="empty">NO FRAMES YET</div>';return;}
+  sorted.slice(0,6).forEach((f,i) => {
+    const rankClass  = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    const rankSymbol = i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
+    const pct = Math.max(4, Math.round(((f.uses||0)/maxUses)*100));
+    const item = document.createElement('div'); item.className='bs-item';
+    const thumbEl = buildFrameThumb(f, 36, 54);
+    item.innerHTML = `<div class="bs-rank ${rankClass}">${rankSymbol}</div>`;
+    item.appendChild(thumbEl);
+    item.innerHTML += `
+      <div class="bs-info">
+        <div class="bs-name">${f.name}</div>
+        <div class="bs-uses">${f.uses||0} uses</div>
+        <div class="bs-bar-wrap"><div class="bs-bar" style="width:${pct}%"></div></div>
+      </div>
+      <div class="bs-cat">${f.cat}</div>
+    `;
+    list.appendChild(item);
+  });
+}
+
+// ══════════════════════════════════════════
+// FRAME MANAGER
+// ══════════════════════════════════════════
+function buildFrameThumb(f, w, h) {
+  if(f.imageUrl && f.type === 'png') {
+    const img = document.createElement('img');
+    img.src = f.imageUrl; img.className = 'frame-thumb-img';
+    img.style.cssText = `width:${w}px;height:${h}px;object-fit:cover;`;
+    const wrap = document.createElement('div');
+    wrap.className = 'frame-thumb';
+    wrap.style.cssText = `width:${w}px;height:${h}px;`;
+    wrap.appendChild(img); return wrap;
+  }
+  const cv = document.createElement('canvas');
+  cv.width = w; cv.height = h;
+  drawFrame(cv, f, f.slots||3);
+  const wrap = document.createElement('div');
+  wrap.className = 'frame-thumb';
+  wrap.style.cssText = `width:${w}px;height:${h}px;`;
+  wrap.appendChild(cv); return wrap;
+}
+
+function renderFrameManager(frames) {
+  const q = (document.getElementById('frameSearch')?.value||'').toLowerCase();
+  const filtered = q ? frames.filter(f=>f.name.toLowerCase().includes(q)||f.cat.toLowerCase().includes(q)) : frames;
+  document.getElementById('frameCount').textContent = frames.length;
+  const list = document.getElementById('frameList'); list.innerHTML = '';
+  if(!filtered.length){list.innerHTML='<div class="empty">NO FRAMES FOUND</div>';return;}
+  filtered.forEach(f => {
+    const row = document.createElement('div'); row.className='frame-row';
+    row.appendChild(buildFrameThumb(f, 32, 48));
+    const typeBadge = f.type==='png'
+      ? '<span class="frame-type-badge badge-png">PNG</span>'
+      : '<span class="frame-type-badge badge-gen">GEN</span>';
+    const info = document.createElement('div'); info.className='frame-info';
+    const ratioInfo = f.ratio ? ` · ${f.ratio.toUpperCase()}` : '';
+    const slotHInfo = f.slotH ? ` · ${f.slotH}%H` : '';
+    info.innerHTML = `<div class="frame-name">${f.name} ${typeBadge}</div><div class="frame-meta">${f.cat.toUpperCase()} · ${f.uses||0} USES · ${f.slots||3} SLOTS${slotHInfo}${ratioInfo}</div>`;
+    row.appendChild(info);
+    const del = document.createElement('button'); del.className='del-btn'; del.title='Delete';
+    del.innerHTML='🗑️';
+    del.onclick = () => {
+      if(confirm(`Delete "${f.name}"?`)){DB.deleteFrame(f.id);renderFrameManager(DB.getFrames());showToast('🗑️ Frame deleted');}
+    };
+    row.appendChild(del);
+    list.appendChild(row);
+  });
+}
+
+// ══════════════════════════════════════════
+// LOGS
+// ══════════════════════════════════════════
+function renderLogs(visitors) {
+  const list = document.getElementById('logList'); list.innerHTML = '';
+  if(!visitors.length){list.innerHTML='<div class="empty">NO VISITS YET</div>';return;}
+  [...visitors].reverse().slice(0,100).forEach(v => {
+    const row = document.createElement('div'); row.className='log-row';
+    const pc = v.page||'index';
+    const d = new Date(v.time);
+    const t = d.toLocaleDateString('id-ID')+' '+d.toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+    row.innerHTML=`<div class="log-dot page-dot-${pc}"></div><span class="log-page">${pc.toUpperCase()}</span><span class="log-time">${t}</span>`;
+    list.appendChild(row);
+  });
+}
+function clearLogs() {
+  if(confirm('Clear all visitor logs?')){localStorage.removeItem('phu_visitors');renderLogs([]);showToast('🗑️ Logs cleared');}
+}
+
+// Init
+refresh();
+updateCreatorCanvas();
+updateUploadSlotPreview();
+</script>
+</body>
+</html>
